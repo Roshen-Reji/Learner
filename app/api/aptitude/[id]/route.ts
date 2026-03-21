@@ -6,12 +6,17 @@ import Question from "@/models/Question";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  // 1. Update params type to Promise
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role !== "moderator") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // 2. Await the params object before using the ID
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
 
   await dbConnect();
   const body = await req.json();
@@ -24,7 +29,7 @@ export async function PATCH(
   }
 
   const question = await Question.findByIdAndUpdate(
-    params.id,
+    id, // Use the awaited id here
     update,
     { new: true }
   );
@@ -38,14 +43,19 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  // 1. Update params type to Promise
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role !== "moderator") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // 2. Await the params object before using the ID
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+
   await dbConnect();
-  await Question.findByIdAndDelete(params.id);
+  await Question.findByIdAndDelete(id); // Use the awaited id here
   return NextResponse.json({ message: "Question deleted" });
 }
