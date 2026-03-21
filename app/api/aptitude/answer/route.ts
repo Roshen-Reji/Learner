@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Question from "@/models/Question";
 import { awardPoints } from "@/lib/points";
+import { recordActivity } from "@/lib/activity";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,6 +31,9 @@ export async function POST(req: NextRequest) {
       question.attemptedBy = question.attemptedBy || [];
       question.attemptedBy.push(user.id);
       await question.save();
+
+      // Ensure even wrong attempts count towards daily streak
+      await recordActivity(user.id);
 
       if (correct) {
         question.correctBy = question.correctBy || [];

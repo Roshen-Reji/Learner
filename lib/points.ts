@@ -1,6 +1,7 @@
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import PointEvent from "@/models/PointEvent";
+import { recordActivity } from "@/lib/activity";
 
 export type PointEventType =
   | "quiz_correct"
@@ -31,6 +32,10 @@ export async function awardPoints(
   metadata: Record<string, any> = {}
 ): Promise<number> {
   await dbConnect();
+  
+  // Track continuous activity for this point generation
+  await recordActivity(userId);
+  
   const points = POINT_VALUES[event] || 0;
 
   await PointEvent.create({

@@ -22,21 +22,8 @@ export const authOptions: NextAuthOptions = {
         const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!isValid) return null;
 
-        // Update streak
+        // Update last active date
         const now = new Date();
-        const lastActive = user.lastActiveDate ? new Date(user.lastActiveDate) : null;
-        if (lastActive) {
-          const diffDays = Math.floor(
-            (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24)
-          );
-          if (diffDays === 1) {
-            user.streakDays += 1;
-          } else if (diffDays > 1) {
-            user.streakDays = 1;
-          }
-        } else {
-          user.streakDays = 1;
-        }
         user.lastActiveDate = now;
         await user.save();
 
