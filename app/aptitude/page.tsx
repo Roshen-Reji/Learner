@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
+import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
 import toast from "react-hot-toast";
 import {
   Brain,
@@ -13,8 +14,9 @@ import {
   Zap,
   Trophy,
   RefreshCw,
-  Bot,
   Sparkles,
+  Layers,
+  Bot
 } from "lucide-react";
 
 interface Question {
@@ -34,11 +36,20 @@ type Mode = "qotd" | "sprint" | "browse";
 
 export default function AptitudePage() {
   const { data: session, update } = useSession();
-  const user = session?.user as any;
+  
+  // App State
+  const [isMounted, setIsMounted] = useState(false);
   const [tab, setTab] = useState<Tab>("coding");
   const [mode, setMode] = useState<Mode>("qotd");
+  const [isHighIQ, setIsHighIQ] = useState(false);
+  
+  // Data State
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentQ, setCurrentQ] = useState(0);
+  const [score, setScore] = useState(0);
+  
+  // Interactive State
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<{
     correct: boolean;
@@ -46,21 +57,27 @@ export default function AptitudePage() {
     explanation: string;
     alreadyAttempted?: boolean;
   } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [score, setScore] = useState(0);
-  const [totalAnswered, setTotalAnswered] = useState(0);
+  const [answeredSet, setAnsweredSet] = useState<Set<string>>(new Set());
+  
+  // Timer
   const [sprintTimer, setSprintTimer] = useState(300);
   const [sprintActive, setSprintActive] = useState(false);
-  const [answeredSet, setAnsweredSet] = useState<Set<string>>(new Set());
+
+  // Eliminate Hydration Mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
-    fetchQuestions();
-  }, [tab, mode]);
+    if (isMounted) {
+      fetchQuestions();
+    }
+  }, [tab, mode, isHighIQ, isMounted]);
 
   useEffect(() => {
     if (!sprintActive || sprintTimer <= 0) return;
-    const t = setInterval(() => setSprintTimer((s) => s - 1), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setSprintTimer((s) => s - 1), 1000);
+    return () => clearInterval(timer);
   }, [sprintActive, sprintTimer]);
 
   useEffect(() => {
@@ -76,370 +93,279 @@ export default function AptitudePage() {
     setSelected(null);
     setResult(null);
     setScore(0);
-    setTotalAnswered(0);
+    
     try {
-      const res = await fetch(`/api/aptitude?category=${tab}&mode=${mode}`);
+      const res = await fetch(`/api/aptitude?category=${tab}&mode=${mode}&highIq=${isHighIQ}`);
+      if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
+      
       setQuestions(data);
-      // Initialize answeredSet from server data (persisted attempts)
-      const alreadyAttempted = new Set<string>(
-        data.filter((q: Question) => q.attempted).map((q: Question) => q._id)
-      );
-      setAnsweredSet(alreadyAttempted);
-      setScore(data.filter((q: Question) => q.isCorrect).length);
+      const preAttempted = new Set<string>();
+      let preScore = 0;
+      
+      data.forEach((q: Question) => {
+        if (q.attempted) preAttempted.add(q._id);
+        if (q.isCorrect) preScore += 1;
+      });
+      
+      setAnsweredSet(preAttempted);
+      setScore(preScore);
+      
       if (mode === "sprint") {
-        setSprintTimer(300);
-        setSprintActive(true);
+        setSprintTimer(data.length > 0 ? 300 : 0);
+        setSprintActive(data.length > 0);
       }
     } catch {
-      toast.error("Failed to load questions");
+      toast.error("Error retrieving puzzles");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
-
-  const isAlreadyAnswered = (qId: string) => answeredSet.has(qId);
 
   const handleAnswer = async (index: number) => {
     if (result !== null) return;
     const qId = questions[currentQ]._id;
-    if (isAlreadyAnswered(qId)) return;
+    if (answeredSet.has(qId)) return;
+    
     setSelected(index);
     try {
       const res = await fetch("/api/aptitude/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questionId: qId,
-          selectedIndex: index,
-          mode,
-        }),
+        body: JSON.stringify({ questionId: qId, selectedIndex: index, mode }),
       });
       const data = await res.json();
       setResult(data);
       setAnsweredSet(prev => new Set(prev).add(qId));
-      setTotalAnswered((t) => t + 1);
+      
       if (data.alreadyAttempted) {
-        toast("You've already answered this question.", { icon: "ℹ️" });
+        toast("Already answered previously.", { icon: "ℹ️" });
       } else if (data.correct) {
-        setScore((s) => s + 1);
-        toast.success("Correct! 🎉 +10 points");
+        setScore(s => s + 1);
+        toast.success("Correct! 🎉 +10 pts");
         if (session) {
           await update({ points: ((session.user as any)?.points || 0) + 10 });
         }
       } else {
-        toast.error("Wrong answer 😅");
+        toast.error("Incorrect!");
       }
     } catch {
-      toast.error("Failed to submit answer");
+      toast.error("Connection failed");
     }
   };
 
   const nextQuestion = () => {
     if (currentQ < questions.length - 1) {
-      setCurrentQ((c) => c + 1);
+      setCurrentQ(c => c + 1);
       setSelected(null);
       setResult(null);
     } else {
-      toast.success(`Completed! Score: ${score}/${questions.length}`);
       setSprintActive(false);
     }
   };
 
-  const tabs: { key: Tab; label: string; emoji: string }[] = [
-    { key: "coding", label: "Coding", emoji: "💻" },
-    { key: "numerical", label: "Numerical", emoji: "🔢" },
-    { key: "verbal", label: "Verbal", emoji: "📝" },
-  ];
-
-  const modes: { key: Mode; label: string; icon: any; desc: string; badge?: string }[] = [
-    { key: "qotd", label: "Question of the Day", icon: Zap, desc: "Daily AI challenge", badge: "⭐" },
-    { key: "sprint", label: "5-min Sprint", icon: Clock, desc: "Timed challenge" },
-    { key: "browse", label: "Practice All", icon: Brain, desc: "Browse & practice" },
-  ];
+  if (!isMounted) return null;
 
   return (
-    <div className="min-h-screen bg-surface-light">
+    <div className="min-h-screen relative bg-slate-50 dark:bg-black transition-colors duration-700 bg-gradient-to-br from-indigo-500/10 via-blue-500/5 to-transparent">
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute inset-0 bg-white/40 dark:bg-slate-900/60 backdrop-blur-[2px] pointer-events-none" />
+
       <Sidebar />
-      <main className="lg:ml-72 pt-16 lg:pt-0 pb-24 lg:pb-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 lg:py-10">
-          {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary flex items-center gap-3">
-              <Brain className="text-primary" /> Aptitude Center
-            </h1>
-            <p className="text-text-secondary mt-1 flex items-center gap-2">
-              AI-powered questions that update daily
-              <span className="badge bg-cyan-50 text-cyan-700 text-xs flex items-center gap-1">
-                <Bot size={10} /> AI Generated
-              </span>
-            </p>
+      <main className="relative z-10 lg:ml-72 pt-20 lg:pt-8 pb-32 lg:pb-8 min-h-screen flex flex-col">
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 w-full flex-1 flex flex-col">
+          
+          {/* Header & Main Toggles */}
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-black text-text-primary flex items-center gap-3 tracking-tight">
+                <Brain className="text-primary" size={32} /> Aptitude Hub
+              </h1>
+              <p className="text-text-secondary mt-1 font-medium text-sm sm:text-base">
+                Challenge your logic with daily assessments.
+              </p>
+            </div>
+            
+            <div className="flex bg-white/50 dark:bg-slate-800/50 p-1 r-xl shadow-inner border border-white/60 dark:border-white/10 w-fit rounded-xl">
+              <button
+                onClick={() => setIsHighIQ(false)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 ${!isHighIQ ? "bg-white dark:bg-slate-700 text-primary shadow-sm" : "text-text-secondary"}`}
+              >
+                <Layers size={14} /> My KTU Branch
+              </button>
+              <button
+                onClick={() => setIsHighIQ(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 ${isHighIQ ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm" : "text-text-secondary"}`}
+              >
+                <Zap size={14} /> High IQ General
+              </button>
+            </div>
           </div>
 
-          {/* Category Tabs */}
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-            {tabs.map((t) => (
+          {/* Navigation Bars */}
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar snap-x">
+            {[
+              { key: "coding" as Tab, label: "Logic", e: "💻" },
+              { key: "numerical" as Tab, label: "Quants", e: "🔢" },
+              { key: "verbal" as Tab, label: "Verbal", e: "📝" },
+            ].map((t) => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`px-5 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all flex items-center gap-2 ${
-                  tab === t.key
-                    ? "bg-primary text-white shadow-md shadow-primary/20"
-                    : "bg-white text-text-secondary hover:bg-gray-50 border border-border"
-                }`}
+                className={`snap-start shrink-0 px-5 py-2.5 rounded-full font-bold text-sm sm:text-base transition-all flex items-center gap-2 backdrop-blur-md border ${tab === t.key ? "bg-primary text-white border-primary shadow-[0_5px_20px_rgba(59,130,246,0.4)]" : "bg-white/60 dark:bg-slate-800/60 text-text-secondary hover:bg-white"}`}
               >
-                <span>{t.emoji}</span> {t.label}
+                {t.e} {t.label}
               </button>
             ))}
           </div>
 
-          {/* Mode Selection */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-            {modes.map((m) => {
+            {[
+              { key: "qotd" as Mode, label: "Daily Challenge", icon: Zap, c: "bg-amber-400 text-white" },
+              { key: "sprint" as Mode, label: "5-min Sprint", icon: Clock, c: "bg-primary/10 text-primary" },
+              { key: "browse" as Mode, label: "Practice All", icon: Brain, c: "bg-emerald-500/10 text-emerald-600" },
+            ].map((m) => {
               const Icon = m.icon;
+              const active = mode === m.key;
               return (
                 <button
                   key={m.key}
                   onClick={() => setMode(m.key)}
-                  className={`card !p-4 text-left transition-all ${
-                    mode === m.key
-                      ? "!border-primary !shadow-md ring-2 ring-primary/20"
-                      : "hover:border-primary/30"
-                  }`}
+                  className={`relative overflow-hidden text-left p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] transition-all backdrop-blur-xl border ${active ? "bg-white/90 dark:bg-slate-800/90 border-primary ring-2 ring-primary/30 transform scale-[1.02] shadow-xl" : "bg-white/50 dark:bg-slate-900/50 border-white/60 hover:-translate-y-1 hover:bg-white text-text-secondary"}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        mode === m.key
-                          ? "bg-primary/10 text-primary"
-                          : "bg-gray-100 text-text-secondary"
-                      }`}
-                    >
-                      <Icon size={20} />
+                  <div className="flex items-center gap-3 relative z-10">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${active ? "bg-gradient-to-br from-primary to-blue-600 text-white" : "bg-white/80 dark:bg-slate-800"}`}>
+                      <Icon size={18} />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm flex items-center gap-1">
-                        {m.label}
-                        {m.badge && <span className="text-xs">{m.badge}</span>}
-                      </p>
-                      <p className="text-xs text-text-secondary">{m.desc}</p>
-                    </div>
+                    <p className={`font-extrabold text-sm sm:text-base ${active ? "text-primary dark:text-blue-400" : ""}`}>{m.label}</p>
                   </div>
                 </button>
               );
             })}
           </div>
 
-          {/* Sprint Timer */}
-          {mode === "sprint" && sprintActive && (
-            <div className="card-gamify mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-3 text-white">
-                <Clock size={24} className="text-gamify-red" />
+          {/* Sprint HUD */}
+          {mode === "sprint" && sprintActive && questions.length > 0 && (
+            <div className="mb-6 bg-gradient-to-r from-red-500 to-orange-500 text-white p-4 sm:p-5 rounded-[1.5rem] flex items-center justify-between shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center animate-pulse"><Clock size={20} /></div>
                 <div>
-                  <p className="text-sm text-gray-400">Time Remaining</p>
-                  <p className="text-2xl font-bold text-gamify-red">
-                    {Math.floor(sprintTimer / 60)}:
-                    {(sprintTimer % 60).toString().padStart(2, "0")}
-                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/80">Time Remaining</p>
+                  <p className="text-2xl sm:text-3xl font-black">{Math.floor(sprintTimer / 60)}:{(sprintTimer % 60).toString().padStart(2, "0")}</p>
                 </div>
               </div>
-              <div className="text-right text-white">
-                <p className="text-sm text-gray-400">Score</p>
-                <p className="text-2xl font-bold">
-                  {score}/{questions.length}
-                </p>
+              <div className="text-right">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/80">Score</p>
+                <p className="text-2xl sm:text-3xl font-black">{score}<span className="text-white/50 text-lg">/{questions.length}</span></p>
               </div>
             </div>
           )}
 
-          {/* Question Display */}
-          {loading ? (
-            <div className="flex flex-col items-center py-20 gap-3">
-              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-              <p className="text-sm text-text-secondary">Loading questions...</p>
-            </div>
-          ) : questions.length === 0 ? (
-            <div className="card text-center py-16">
-              <Sparkles className="mx-auto text-primary/50 mb-4" size={48} />
-              <h3 className="text-lg font-semibold text-text-primary">
-                No {tab} questions available yet
-              </h3>
-              <p className="text-text-secondary mt-1 max-w-sm mx-auto">
-                Questions are generated by AI daily. A moderator can also
-                trigger generation from the Moderator Panel → AI Tools.
-              </p>
-              <button
-                onClick={fetchQuestions}
-                className="btn-secondary mt-4 flex items-center gap-2 mx-auto"
-              >
-                <RefreshCw size={14} /> Refresh
-              </button>
-            </div>
-          ) : (
-            <div className="card animate-fade-in">
-              {/* Question Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="badge-primary">
-                    Q{currentQ + 1} of {questions.length}
-                  </span>
-                  {questions[currentQ].aiGenerated && (
-                    <span className="badge bg-cyan-50 text-cyan-700 text-xs flex items-center gap-1">
-                      <Bot size={10} /> AI
-                    </span>
-                  )}
+          {/* Core Content */}
+          <div className="flex-1 pb-10">
+            {loading ? (
+              <div className="flex items-center justify-center h-48"><HeartbeatLoader message="SYNCING WITH SYSTEMS" /></div>
+            ) : questions.length === 0 ? (
+              <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-[2.5rem] p-10 text-center shadow-xl w-full max-w-lg mx-auto mt-6 animate-fade-in">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                  <Sparkles className="text-primary/70" size={40} />
                 </div>
-                <span className="badge-success flex items-center gap-1">
-                  <Trophy size={12} /> {score} correct
-                </span>
-              </div>
-
-              {/* Question Text */}
-              <h2 className="text-lg sm:text-xl font-semibold text-text-primary mb-6 leading-relaxed">
-                {questions[currentQ].text}
-              </h2>
-
-              {/* Options */}
-              <div className="space-y-3">
-                {questions[currentQ].options.map((opt, i) => {
-                  const qAnswered = isAlreadyAnswered(questions[currentQ]._id) && result === null;
-                  let optClass = "card !p-4 cursor-pointer hover:border-primary/50 transition-all";
-                  
-                  if (result !== null) {
-                    if (i === result.correctIndex)
-                      optClass = "card !p-4 !border-success !bg-green-50";
-                    else if (i === selected && !result.correct)
-                      optClass = "card !p-4 !border-error !bg-red-50";
-                  } else if (qAnswered) {
-                     if (i === questions[currentQ].correctIndex) {
-                       optClass = "card !p-4 !border-success !bg-green-50 opacity-80 cursor-not-allowed";
-                     } else {
-                       optClass = "card !p-4 !bg-gray-100/50 !text-gray-400 opacity-60 cursor-not-allowed border-transparent";
-                     }
-                  } else if (i === selected) {
-                    optClass = "card !p-4 !border-primary !bg-primary-50";
-                  }
-
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => handleAnswer(i)}
-                      disabled={result !== null || qAnswered}
-                      className={`${optClass} w-full text-left flex items-center gap-3`}
-                    >
-                      <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-sm font-bold shrink-0">
-                        {String.fromCharCode(65 + i)}
-                      </span>
-                      <span className="flex-1">{opt}</span>
-                      {(result !== null && i === result.correctIndex) || (qAnswered && i === questions[currentQ].correctIndex) ? (
-                        <CheckCircle
-                          className="text-success shrink-0"
-                          size={20}
-                        />
-                      ) : null}
-                      {result !== null &&
-                        i === selected &&
-                        !result.correct && (
-                          <XCircle
-                            className="text-error shrink-0"
-                            size={20}
-                          />
-                        )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Result Feedback */}
-              {result && (
-                <div
-                  className={`mt-4 p-4 rounded-xl ${
-                    result.correct
-                      ? "bg-green-50 border border-success/30"
-                      : "bg-red-50 border border-error/30"
-                  }`}
-                >
-                  <p className={`font-semibold ${result.correct ? "text-success" : "text-error"}`}>
-                    {result.correct ? "Correct!" : "Incorrect"}
-                  </p>
-                  {result.explanation && (
-                    <p className="text-sm text-text-secondary mt-1">
-                      {result.explanation}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {result && result.alreadyAttempted && (
-                <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3">
-                   <div className="p-2 bg-amber-100 rounded-lg shrink-0 mt-0.5"><CheckCircle size={18} className="text-amber-600" /></div>
-                   <div>
-                     <p className="font-bold text-text-primary text-sm">You've already solved this question.</p>
-                     <p className="text-xs text-text-secondary mt-1">
-                       No points were awarded for this repeat attempt.
-                     </p>
-                   </div>
-                </div>
-              )}
-
-              {isAlreadyAnswered(questions[currentQ]._id) && !result && (
-                <div className={`mt-4 p-4 rounded-xl ${questions[currentQ].isCorrect ? "bg-green-50 border border-success/30" : "bg-red-50 border border-error/30"}`}>
-                   <p className={`font-semibold ${questions[currentQ].isCorrect ? "text-success" : "text-error"}`}>
-                     {questions[currentQ].isCorrect ? "You previously answered this correctly." : "You previously answered this incorrectly."}
-                   </p>
-                   {questions[currentQ].explanation && (
-                     <p className="text-sm text-text-secondary mt-1">
-                       {questions[currentQ].explanation}
-                     </p>
-                   )}
-                </div>
-              )}
-
-              {/* Next Button */}
-              {(result !== null || isAlreadyAnswered(questions[currentQ]._id)) && currentQ < questions.length - 1 && (
+                <h3 className="text-2xl font-black text-text-primary mb-2">No Challenges Uploaded</h3>
+                <p className="text-text-secondary font-medium leading-relaxed mb-6">
+                  There are currently no active puzzles for "{tab}" under your selected context. Moderators sync new puzzles routinely—check back later!
+                </p>
                 <button
-                  onClick={nextQuestion}
-                  className="btn-primary mt-4 flex items-center gap-2"
+                  onClick={fetchQuestions}
+                  className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-full font-bold shadow-md transition-all flex justify-center items-center gap-2 mx-auto"
                 >
-                  Next Question <ChevronRight size={18} />
+                  <RefreshCw size={18} /> Refresh Board
                 </button>
-              )}
-
-              {/* Completion */}
-              {(result !== null || isAlreadyAnswered(questions[currentQ]._id)) && currentQ === questions.length - 1 && (
-                <div className="mt-4 card-gamify text-center">
-                  <Trophy
-                    className="text-gamify-gold mx-auto mb-2"
-                    size={40}
-                  />
-                  <h3 className="text-xl font-bold text-white">
-                    {mode === "sprint" ? "Sprint" : "Session"} Complete!
-                  </h3>
-                  <p className="text-gray-300 mt-1">
-                    Score: {score}/{questions.length} •{" "}
-                    {Math.round((score / questions.length) * 100)}%
+              </div>
+            ) : ((result !== null || answeredSet.has(questions[currentQ]._id)) && currentQ === questions.length - 1) ? (
+              <div className="bg-black/90 dark:bg-black p-8 sm:p-10 rounded-[2.5rem] text-center shadow-2xl animate-fade-in">
+                <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Trophy className="text-white" size={40} />
+                </div>
+                <h3 className="text-3xl font-black text-white mb-6 tracking-tight">Challenge Conquered!</h3>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+                  <p className="text-slate-300 font-medium bg-white/10 px-6 py-2 rounded-xl text-lg">
+                    Score: <span className="font-bold text-white ml-2">{score}</span>/{questions.length}
                   </p>
-                  <div className="flex gap-3 justify-center mt-4">
-                    <button
-                      onClick={fetchQuestions}
-                      className="btn-gamify flex items-center gap-2"
-                    >
-                      <RefreshCw size={16} /> Try Again
-                    </button>
-                    <button
-                      onClick={() => {
-                        const next =
-                          tabs[(tabs.findIndex((t) => t.key === tab) + 1) % tabs.length];
-                        setTab(next.key);
-                      }}
-                      className="px-4 py-2 rounded-xl border border-white/20 text-white hover:bg-white/10 transition text-sm font-medium"
-                    >
-                      Next Category →
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                   <button onClick={fetchQuestions} className="bg-primary hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-full flex justify-center items-center gap-2"><RefreshCw size={18}/> Retry Set</button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/60 sm:rounded-[2.5rem] rounded-2xl p-5 sm:p-10 shadow-2xl relative overflow-hidden animate-fade-in">
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
+                  <div className="flex gap-3 items-center">
+                    <span className="bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-xl font-black shadow-inner">Q <span className="text-primary">{currentQ+1}</span>/{questions.length}</span>
+                    {questions[currentQ].aiGenerated && <span className="bg-cyan-500/10 text-cyan-700 px-3 py-1.5 rounded-xl font-bold text-xs flex gap-1 items-center"><Bot size={14}/> AI Assisted</span>}
+                  </div>
+                  <span className="bg-emerald-500/10 text-emerald-700 font-black px-3 py-1.5 rounded-xl flex items-center gap-2"><Trophy size={16}/> {score} Pts</span>
+                </div>
+
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text-primary mb-8 leading-tight">{questions[currentQ].text}</h2>
+
+                <div className="space-y-4">
+                  {questions[currentQ].options.map((opt, i) => {
+                    const qAnswered = answeredSet.has(questions[currentQ]._id) && result === null;
+                    let style = "bg-white/70 hover:bg-white text-text-primary border-transparent opacity-80 cursor-pointer shadow-sm";
+                    let badge = "bg-primary/5 text-primary";
+
+                    if (result) {
+                      if (i === result.correctIndex) { style = "border-emerald-500 bg-emerald-50 text-emerald-900 shadow-md font-bold scale-[1.01]"; badge = "bg-emerald-500 text-white"; }
+                      else if (i === selected) { style = "border-red-500 bg-red-50 text-red-900 shadow-sm font-bold scale-[1.01]"; badge = "bg-red-500 text-white"; }
+                      else { style = "opacity-50 cursor-not-allowed"; }
+                    } else if (qAnswered) {
+                      if (i === questions[currentQ].correctIndex) { style = "border-emerald-300 bg-emerald-50 text-emerald-800 opacity-80 cursor-not-allowed"; badge = "bg-emerald-500/20 text-emerald-700"; }
+                      else { style = "opacity-50 cursor-not-allowed"; }
+                    } else if (i === selected) {
+                      style = "border-primary bg-primary/5 shadow-md scale-[1.01] font-bold"; badge = "bg-primary text-white";
+                    }
+
+                    return (
+                      <button key={i} onClick={() => handleAnswer(i)} disabled={result !== null || qAnswered} className={`w-full text-left flex items-center gap-4 transition-all rounded-2xl p-4 sm:p-5 border-2 ${style}`}>
+                        <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black shrink-0 transition-colors ${badge}`}>{String.fromCharCode(65 + i)}</span>
+                        <span className="flex-1">{opt}</span>
+                        {(result && i === result.correctIndex) || (qAnswered && i === questions[currentQ].correctIndex) ? <CheckCircle className="text-emerald-500" size={24}/> : null}
+                        {result && i === selected && !result.correct && <XCircle className="text-red-500" size={24}/>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {result && (
+                  <div className={`mt-8 p-6 rounded-2xl animate-fade-in border ${result.correct ? "bg-emerald-50 border-emerald-300" : "bg-red-50 border-red-300"} flex gap-4 items-start`}>
+                    <div className={`p-2 rounded-xl text-white mt-1 ${result.correct ? "bg-emerald-500": "bg-red-500"}`}>{result.correct ? <CheckCircle size={24}/> : <XCircle size={24}/>}</div>
+                    <div>
+                      <p className={`font-black text-xl mb-2 ${result.correct ? "text-emerald-900" : "text-red-900"}`}>{result.correct ? "Phenomenal! That's correct!" : "Not quite right!"}</p>
+                      {result.explanation && <p className="text-sm font-medium text-slate-700 bg-white/50 p-3 rounded-xl">{result.explanation}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {answeredSet.has(questions[currentQ]._id) && !result && (
+                  <div className={`mt-8 p-6 rounded-2xl bg-slate-100/80 border border-slate-300 flex items-start gap-4`}>
+                     <div className="bg-slate-300 text-slate-700 p-2 rounded-xl mt-1"><CheckCircle size={24}/></div>
+                     <div>
+                       <p className="font-bold text-slate-800 text-lg">You've locked this in previously.</p>
+                       <p className="text-sm text-slate-600 mt-1">To maintain fair leaderboards, points are only awarded on your first attempt.</p>
+                     </div>
+                  </div>
+                )}
+
+                {(result || answeredSet.has(questions[currentQ]._id)) && currentQ < questions.length - 1 && (
+                  <div className="mt-8 text-right">
+                    <button onClick={nextQuestion} className="bg-primary hover:bg-primary-hover text-white px-8 py-3.5 rounded-full font-bold shadow-lg flex items-center justify-center gap-2 ml-auto">
+                      Next Challenge <ChevronRight size={18} />
                     </button>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

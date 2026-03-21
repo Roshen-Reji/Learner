@@ -15,7 +15,8 @@ export async function PATCH(
 
   await dbConnect();
   const body = await req.json();
-  const placement = await Placement.findByIdAndUpdate(params.id, body, { new: true });
+  const resolvedParams = await params;
+  const placement = await Placement.findByIdAndUpdate(resolvedParams.id, body, { new: true });
   if (!placement) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -32,6 +33,7 @@ export async function DELETE(
   }
 
   await dbConnect();
-  await Placement.findByIdAndDelete(params.id);
+  const resolvedParams = await params;
+  await Placement.findByIdAndDelete(resolvedParams.id);
   return NextResponse.json({ message: "Placement deleted" });
 }

@@ -16,6 +16,7 @@ import {
   Globe,
   Loader2,
 } from "lucide-react";
+import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
 
 import { useRef } from "react";
 
@@ -29,6 +30,7 @@ interface Post {
   _id: string;
   title: string;
   body: string;
+  author: string;
   authorName: string;
   replies: Reply[];
   upvotes: string[];
@@ -129,10 +131,13 @@ export default function CommunityPage() {
   const handleDelete = async (postId: string) => {
     if (!confirm("Delete this post?")) return;
     try {
-      await fetch(`/api/community/${postId}`, { method: "DELETE" });
+      const res = await fetch(`/api/community/${postId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
       fetchPosts();
       toast.success("Post deleted");
-    } catch {}
+    } catch {
+      toast.error("Failed to delete post");
+    }
   };
 
   const toggleExpand = (id: string) => {
@@ -217,7 +222,7 @@ export default function CommunityPage() {
           {activeTab === "forums" && (
             loading ? (
             <div className="flex justify-center py-20">
-              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <HeartbeatLoader message="LOADING POSTS..." />
             </div>
           ) : posts.length === 0 ? (
             <div className="card text-center py-16">
@@ -238,7 +243,7 @@ export default function CommunityPage() {
                         <span>{timeAgo(post.createdAt)}</span>
                       </div>
                     </div>
-                    {user?.role === "moderator" && (
+                    {(user?.role === "moderator" || user?.id === post.author) && (
                       <button onClick={() => handleDelete(post._id)} className="text-red-400 hover:text-red-600 p-1">
                         <Trash2 size={16} />
                       </button>

@@ -18,7 +18,8 @@ export async function PATCH(
 
   await dbConnect();
   const user = session.user as any;
-  const note = await Note.findById(params.id);
+  const resolvedParams = await params;
+  const note = await Note.findById(resolvedParams.id);
 
   if (!note) {
     return NextResponse.json({ error: "Note not found" }, { status: 404 });
@@ -71,7 +72,8 @@ export async function DELETE(
   }
 
   await dbConnect();
-  const note = await Note.findById(params.id);
+  const resolvedParams = await params;
+  const note = await Note.findById(resolvedParams.id);
   if (!note) return NextResponse.json({ error: "Note not found" }, { status: 404 });
 
   if (note.publicId) {
@@ -91,6 +93,6 @@ export async function DELETE(
     }
   }
 
-  await Note.findByIdAndDelete(params.id);
+  await Note.findByIdAndDelete(resolvedParams.id);
   return NextResponse.json({ success: true });
 }

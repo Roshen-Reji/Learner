@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/fetch-placements",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

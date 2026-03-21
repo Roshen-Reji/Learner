@@ -14,6 +14,8 @@ export interface IQuestion extends Document {
   qotdDate: Date | null;
   attemptedBy: mongoose.Types.ObjectId[];
   correctBy: mongoose.Types.ObjectId[];
+  isHighIQ: boolean;
+  targetBranch?: string;
   createdAt: Date;
 }
 
@@ -40,6 +42,8 @@ const QuestionSchema = new Schema<IQuestion>(
     qotdDate: { type: Date, default: null },
     attemptedBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
     correctBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    isHighIQ: { type: Boolean, default: false },
+    targetBranch: { type: String, default: "General" },
   },
   { timestamps: true }
 );

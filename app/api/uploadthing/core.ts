@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 const f = createUploadthing();
 
 export const ourFileRouter = {
-  notesUploader: f({ pdf: { maxFileSize: "16MB" }, image: { maxFileSize: "4MB" } })
+  notesUploader: f({ blob: { maxFileSize: "16MB" }, pdf: { maxFileSize: "16MB" }, image: { maxFileSize: "4MB" } })
     .middleware(async ({ req }) => {
       const session = await getServerSession(authOptions);
       if (!session) throw new Error("Unauthorized");

@@ -29,7 +29,8 @@ export async function PATCH(
     updates.passwordHash = await bcrypt.hash(body.password, 12);
   }
 
-  const user = await User.findByIdAndUpdate(params.id, updates, { new: true }).select("-passwordHash");
+  const resolvedParams = await params;
+  const user = await User.findByIdAndUpdate(resolvedParams.id, updates, { new: true }).select("-passwordHash");
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
@@ -47,6 +48,7 @@ export async function DELETE(
   }
 
   await dbConnect();
-  await User.findByIdAndDelete(params.id);
+  const resolvedParams = await params;
+  await User.findByIdAndDelete(resolvedParams.id);
   return NextResponse.json({ message: "User deleted" });
 }

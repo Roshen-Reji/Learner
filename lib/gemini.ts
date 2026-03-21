@@ -6,14 +6,15 @@ function getModel() {
     return null;
   }
   const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  return genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 }
 
 export async function generateQuestions(
   topic: string,
   category: "coding" | "numerical" | "verbal",
   count: number = 5,
-  existingTexts: string[] = []
+  existingTexts: string[] = [],
+  context?: { isHighIQ?: boolean; branch?: string }
 ): Promise<any[] | null> {
   const model = getModel();
   if (!model) return null;
@@ -22,8 +23,15 @@ export async function generateQuestions(
     ? `\n\nIMPORTANT: Do NOT generate questions similar to these existing ones:\n${existingTexts.slice(0, 20).map((t, i) => `${i + 1}. ${t}`).join("\n")}\n\nGenerate completely NEW and UNIQUE questions that are different from the above.`
     : "";
 
+  let contextInstruction = "";
+  if (context?.isHighIQ) {
+    contextInstruction = "\nThese questions should be HIGH IQ, designed to test deep logical reasoning and lateral thinking. They should be highly advanced, resembling top-tier tech company puzzles and competitive logic challenges.";
+  } else if (context?.branch) {
+    contextInstruction = `\nCRITICAL: These questions MUST be strictly tailored to the latest KTU (Kerala Technological University) B.Tech syllabus for the ${context.branch} branch. Make them highly relevant for Indian engineering campus placements.`;
+  }
+
   const prompt = `Generate ${count} multiple choice questions about "${topic}" for the category "${category}". 
-Each question should have 4 options and be suitable for college students preparing for job interviews.
+Each question should have 4 options and be suitable for college students preparing for job interviews.${contextInstruction}
 Make each question UNIQUE, creative, and test different concepts within the topic.
 Vary the difficulty — include easy, medium, and hard questions.${avoidSection}
 
@@ -40,14 +48,29 @@ Return ONLY valid JSON array with this format:
 
   try {
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!result || !result.response) return null;
+    
+    let text = "";
+    try {
+      text = result.response.text().trim();
+    } catch (e) {
+      console.warn("Gemini safety block or empty text output.");
+      return null;
+    }
+
+    // Strip markdown code blocks if present
+    if (text.startsWith("```json")) text = text.replace(/^```json/, "");
+    if (text.startsWith("```")) text = text.replace(/^```/, "");
+    if (text.endsWith("```")) text = text.replace(/```$/, "");
+    
+    const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     }
-    return null;
-  } catch (error) {
-    console.error("Gemini question generation error:", error);
+    // Fallback attempt to parse raw string if regex fails
+    return JSON.parse(text);
+  } catch (error: any) {
+    console.warn("Gemini question generation error (Quota/Network):", error?.message || "Unknown error");
     return null;
   }
 }
@@ -82,14 +105,23 @@ Return ONLY valid JSON with this format:
 
   try {
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    if (!result || !result.response) return null;
+    
+    let text = "";
+    try {
+      text = result.response.text();
+    } catch (e) {
+      console.warn("Gemini safety block or empty text output on Roadmap.");
+      return null;
+    }
+
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     }
     return null;
-  } catch (error) {
-    console.error("Gemini roadmap generation error:", error);
+  } catch (error: any) {
+    console.warn("Gemini roadmap generation error (Quota/Network):", error?.message || "Unknown error");
     return null;
   }
 }
@@ -123,14 +155,12 @@ export async function chatWithAI(
 
     const lastMessage = messages[messages.length - 1];
     const result = await chat.sendMessage(lastMessage.content);
+    if (!result || !result.response) return "Sorry, I received an empty response.";
+    
     return result.response.text();
   } catch (error: any) {
-    console.error("Gemini chat error details:", {
-      message: error.message,
-      status: error.status,
-      statusText: error.statusText
-    });
-    return `Connection Error: ${error.message || "Unknown API Error"}. If you see 404, please double check your API key is from Google AI Studio (aistudio.google.com) and the Generative Language API is enabled.`;
+    console.warn("Gemini chat error Details:", error?.message || "Unknown error");
+    return `Connection Error: ${error?.message || "Unknown API Error"}. You may have exceeded your daily quota or encountered a safety blocker.`;
   }
 }
 

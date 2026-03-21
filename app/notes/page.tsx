@@ -6,6 +6,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import toast from "react-hot-toast";
 import { FileText, Upload, Eye, Download, Search, X } from "lucide-react";
 import { useUploadThing } from "@/utils/uploadthing";
+import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
 
 interface Note {
   _id: string;
@@ -64,7 +65,7 @@ export default function NotesPage() {
     try {
       // 1. Upload direct to AWS via UploadThing
       const uploadRes = await startUpload([file]);
-      if (!uploadRes || !uploadRes[0]) throw new Error("AWS Upload failed");
+      if (!uploadRes || !uploadRes[0]) throw new Error("AWS Upload failed. (If on Vercel, check UPLOADTHING_SECRET or NEXTAUTH_URL env vars!)");
       
       const fileUrl = uploadRes[0].url;
       const fileKey = uploadRes[0].key;
@@ -143,7 +144,7 @@ export default function NotesPage() {
 
           {loading ? (
             <div className="flex justify-center py-20">
-              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <HeartbeatLoader message="LOADING NOTES..." />
             </div>
           ) : notes.length === 0 ? (
             <div className="card text-center py-16">

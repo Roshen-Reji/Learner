@@ -21,8 +21,8 @@ export async function PATCH(
   await dbConnect();
   const body = await req.json();
 
-  // Allow full question editing: text, options, correctIndex, explanation, category, difficulty, approved
-  const allowedFields = ["text", "options", "correctIndex", "explanation", "category", "difficulty", "approved"];
+  // Allow full question editing: text, options, correctIndex, explanation, category, difficulty, approved, branch targets
+  const allowedFields = ["text", "options", "correctIndex", "explanation", "category", "difficulty", "approved", "isHighIQ", "targetBranch"];
   const update: any = {};
   for (const field of allowedFields) {
     if (body[field] !== undefined) update[field] = body[field];

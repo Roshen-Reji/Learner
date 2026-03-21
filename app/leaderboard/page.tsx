@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Sidebar from "@/components/layout/Sidebar";
 import { Trophy, Medal, Star, Flame, Crown } from "lucide-react";
+import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
 
 interface LeaderboardUser {
   _id: string;
@@ -55,7 +56,7 @@ export default function LeaderboardPage() {
 
           {loading ? (
             <div className="flex justify-center py-20">
-              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <HeartbeatLoader message="LOADING RANKINGS..." />
             </div>
           ) : users.length === 0 ? (
             <div className="card text-center py-16">

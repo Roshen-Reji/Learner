@@ -16,9 +16,10 @@ export async function POST(
   await dbConnect();
   const { body } = await req.json();
   const user = session.user as any;
+  const resolvedParams = await params;
 
   const post = await Post.findByIdAndUpdate(
-    params.id,
+    resolvedParams.id,
     {
       $push: {
         replies: {
@@ -45,8 +46,9 @@ export async function PATCH(
 
   await dbConnect();
   const user = session.user as any;
+  const resolvedParams = await params;
 
-  const post = await Post.findById(params.id);
+  const post = await Post.findById(resolvedParams.id);
   if (!post) {
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
@@ -74,11 +76,19 @@ export async function DELETE(
   }
 
   const user = session.user as any;
-  if (user.role !== "moderator") {
+  await dbConnect();
+  
+  const resolvedParams = await params;
+  const post = await Post.findById(resolvedParams.id);
+  
+  if (!post) {
+     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (user.role !== "moderator" && post.author.toString() !== user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await dbConnect();
-  await Post.findByIdAndDelete(params.id);
+  await Post.findByIdAndDelete(resolvedParams.id);
   return NextResponse.json({ message: "Post deleted" });
 }

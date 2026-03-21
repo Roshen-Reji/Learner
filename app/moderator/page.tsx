@@ -33,6 +33,7 @@ import {
   Settings,
   ShieldAlert
 } from "lucide-react";
+import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
 
 export default function ModeratorPage() {
   const { data: session, status } = useSession();
@@ -76,6 +77,8 @@ export default function ModeratorPage() {
   // AI tools
   const [aiTopic, setAiTopic] = useState("");
   const [aiCategory, setAiCategory] = useState<"coding" | "numerical" | "verbal">("coding");
+  const [aiIsHighIQ, setAiIsHighIQ] = useState(false);
+  const [aiTargetBranch, setAiTargetBranch] = useState("General");
   const [aiSkill, setAiSkill] = useState("");
   const [generating, setGenerating] = useState(false);
   const [syncingJobs, setSyncingJobs] = useState(false);
@@ -85,9 +88,9 @@ export default function ModeratorPage() {
   const [qFilter, setQFilter] = useState<string>("all");
   const [qView, setQView] = useState<"live" | "pending">("live");
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
-  const [editQForm, setEditQForm] = useState({ text: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", category: "coding", difficulty: "medium" });
+  const [editQForm, setEditQForm] = useState({ text: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", category: "coding", difficulty: "medium", isHighIQ: false, targetBranch: "General" });
   const [showAddQuestion, setShowAddQuestion] = useState(false);
-  const [newQuestion, setNewQuestion] = useState({ text: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", category: "coding", difficulty: "medium" });
+  const [newQuestion, setNewQuestion] = useState({ text: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", category: "coding", difficulty: "medium", isHighIQ: false, targetBranch: "General" });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -258,7 +261,7 @@ export default function ModeratorPage() {
 
   const startEditQuestion = (q: any) => {
     setEditingQuestion(q);
-    setEditQForm({ text: q.text, options: [...q.options], correctIndex: q.correctIndex, explanation: q.explanation || "", category: q.category, difficulty: q.difficulty || "medium" });
+    setEditQForm({ text: q.text, options: [...q.options], correctIndex: q.correctIndex, explanation: q.explanation || "", category: q.category, difficulty: q.difficulty || "medium", isHighIQ: q.isHighIQ || false, targetBranch: q.targetBranch || "General" });
   };
 
   const saveEditQuestion = async () => {
@@ -289,7 +292,7 @@ export default function ModeratorPage() {
       });
       if (!res.ok) throw new Error();
       toast.success("Question added & approved!");
-      setNewQuestion({ text: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", category: "coding", difficulty: "medium" });
+      setNewQuestion({ text: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", category: "coding", difficulty: "medium", isHighIQ: false, targetBranch: "General" });
       setShowAddQuestion(false);
       loadAllQuestions();
       loadAll();
@@ -317,7 +320,14 @@ export default function ModeratorPage() {
       const res = await fetch("/api/aptitude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ aiGenerate: true, topic: aiTopic, category: aiCategory, count: 5 }),
+        body: JSON.stringify({ 
+          aiGenerate: true, 
+          topic: aiTopic, 
+          category: aiCategory, 
+          count: 5,
+          isHighIQ: aiIsHighIQ,
+          targetBranch: aiIsHighIQ ? "General" : aiTargetBranch 
+        }),
       });
       if (!res.ok) throw new Error();
       toast.success("5 questions generated → Review in Pending!");
@@ -491,7 +501,7 @@ export default function ModeratorPage() {
   if (status === "loading" || !session || user?.role !== "moderator") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <HeartbeatLoader message="LOADING DASHBOARD..." />
       </div>
     );
   }
@@ -847,6 +857,19 @@ export default function ModeratorPage() {
                       <option value="hard">Hard</option>
                     </select>
                   </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select value={newQuestion.isHighIQ ? "true" : "false"} onChange={e => setNewQuestion({...newQuestion, isHighIQ: e.target.value === "true"})} className="input-field">
+                      <option value="false">Branch Specific</option>
+                      <option value="true">High IQ General</option>
+                    </select>
+                    {!newQuestion.isHighIQ && (
+                      <select value={newQuestion.targetBranch} onChange={e => setNewQuestion({...newQuestion, targetBranch: e.target.value})} className="input-field">
+                        {["General", "CSE", "ECE", "EEE", "ME", "CE", "IT", "AI&DS"].map(b => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                   <textarea placeholder="Question text..." value={newQuestion.text} onChange={e => setNewQuestion({...newQuestion, text: e.target.value})} className="input-field !py-3" rows={2} required />
                   <div className="grid grid-cols-2 gap-2">
                     {newQuestion.options.map((opt, i) => (
@@ -904,6 +927,19 @@ export default function ModeratorPage() {
                                 <option value="hard">Hard</option>
                               </select>
                             </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <select value={editQForm.isHighIQ ? "true" : "false"} onChange={e => setEditQForm({...editQForm, isHighIQ: e.target.value === "true"})} className="input-field">
+                                <option value="false">Branch Specific</option>
+                                <option value="true">High IQ General</option>
+                              </select>
+                              {!editQForm.isHighIQ && (
+                                <select value={editQForm.targetBranch} onChange={e => setEditQForm({...editQForm, targetBranch: e.target.value})} className="input-field">
+                                  {["General", "CSE", "ECE", "EEE", "ME", "CE", "IT", "AI&DS"].map(b => (
+                                    <option key={b} value={b}>{b}</option>
+                                  ))}
+                                </select>
+                              )}
+                            </div>
                             <textarea value={editQForm.text} onChange={e => setEditQForm({...editQForm, text: e.target.value})} className="input-field text-sm !py-2" rows={2} />
                             <div className="grid grid-cols-2 gap-2">
                               {editQForm.options.map((opt, i) => (
@@ -930,6 +966,9 @@ export default function ModeratorPage() {
                                   {q.aiGenerated ? "🤖 AI" : "Manual"}
                                 </span>
                                 <span className="badge-primary text-xs capitalize">{q.category}</span>
+                                <span className={`badge text-xs ${q.isHighIQ ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"}`}>
+                                  {q.isHighIQ ? "🧠 High IQ" : `🏫 ${q.targetBranch || "General"}`}
+                                </span>
                                 <span className={`badge text-xs ${q.difficulty === "hard" ? "bg-red-50 text-red-600" : q.difficulty === "easy" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-600"}`}>{q.difficulty || "medium"}</span>
                                 {q.isQOTD && <span className="badge bg-amber-50 text-amber-700 text-xs">⭐ QOTD</span>}
                               </div>
@@ -976,6 +1015,9 @@ export default function ModeratorPage() {
                               {q.aiGenerated ? "🤖 AI Generated" : "Manual"}
                             </span>
                             <span className="badge-primary text-xs">{q.category}</span>
+                            <span className={`badge text-xs ${q.isHighIQ ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"}`}>
+                              {q.isHighIQ ? "🧠 High IQ" : `🏫 ${q.targetBranch || "General"}`}
+                            </span>
                             <span className="badge text-xs bg-gray-100 text-gray-600">{q.difficulty || "medium"}</span>
                           </div>
                           <div className="flex gap-1">
@@ -1237,16 +1279,31 @@ export default function ModeratorPage() {
                 <p className="text-sm text-text-secondary mb-3">
                   Generate 5 questions on any specific topic. These go to Pending for your review first.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input placeholder="Topic (e.g. Sorting Algorithms, SQL Joins)" value={aiTopic} onChange={e => setAiTopic(e.target.value)} className="input-field flex-1" />
-                  <select value={aiCategory} onChange={e => setAiCategory(e.target.value as any)} className="input-field !w-auto">
-                    <option value="coding">💻 Coding</option>
-                    <option value="numerical">🔢 Numerical</option>
-                    <option value="verbal">📝 Verbal</option>
-                  </select>
-                  <button onClick={generateAIQuestions} disabled={generating || !aiTopic} className="btn-primary whitespace-nowrap">
-                    {generating ? "Generating..." : "Generate 5 Questions"}
-                  </button>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input placeholder="Topic (e.g. Sorting Algorithms, SQL Joins)" value={aiTopic} onChange={e => setAiTopic(e.target.value)} className="input-field flex-1" />
+                    <select value={aiCategory} onChange={e => setAiCategory(e.target.value as any)} className="input-field !w-auto">
+                      <option value="coding">💻 Coding</option>
+                      <option value="numerical">🔢 Numerical</option>
+                      <option value="verbal">📝 Verbal</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <select value={aiIsHighIQ ? "true" : "false"} onChange={e => setAiIsHighIQ(e.target.value === "true")} className="input-field">
+                      <option value="false">Branch Specific / Standard</option>
+                      <option value="true">🧠 High IQ (Global)</option>
+                    </select>
+                    {!aiIsHighIQ && (
+                      <select value={aiTargetBranch} onChange={e => setAiTargetBranch(e.target.value)} className="input-field">
+                        {["General", "CSE", "ECE", "EEE", "ME", "CE", "IT", "AI&DS"].map(b => (
+                          <option key={b} value={b}>{b === "General" ? "General (All Branches)" : b}</option>
+                        ))}
+                      </select>
+                    )}
+                    <button onClick={generateAIQuestions} disabled={generating || !aiTopic} className="btn-primary whitespace-nowrap ml-auto">
+                      {generating ? "Generating..." : "Generate 5 Questions"}
+                    </button>
+                  </div>
                 </div>
               </div>
 

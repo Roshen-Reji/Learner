@@ -11,7 +11,8 @@ export async function GET(
   { params }: any
 ) {
   await dbConnect();
-  const roadmap = await Roadmap.findById(params.id);
+  const resolvedParams = await params;
+  const roadmap = await Roadmap.findById(resolvedParams.id);
   if (!roadmap) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -21,7 +22,7 @@ export async function GET(
   if (session) {
     progress = await UserProgress.findOne({
       userId: (session.user as any).id,
-      roadmapId: params.id,
+      roadmapId: resolvedParams.id,
     });
   }
 
@@ -41,9 +42,11 @@ export async function PATCH(
   const body = await req.json();
   const user = session.user as any;
 
+  const resolvedParams = await params;
+
   // Moderator approve/edit
   if (user.role === "moderator" && body.moderate) {
-    const roadmap = await Roadmap.findByIdAndUpdate(params.id, body.updates, {
+    const roadmap = await Roadmap.findByIdAndUpdate(resolvedParams.id, body.updates, {
       new: true,
     });
     return NextResponse.json(roadmap);
@@ -53,13 +56,13 @@ export async function PATCH(
   if (body.completeNode !== undefined) {
     let progress = await UserProgress.findOne({
       userId: user.id,
-      roadmapId: params.id,
+      roadmapId: resolvedParams.id,
     });
 
     if (!progress) {
       progress = await UserProgress.create({
         userId: user.id,
-        roadmapId: params.id,
+        roadmapId: resolvedParams.id,
         completedNodes: [body.completeNode],
       });
     } else if (!progress.completedNodes.includes(body.completeNode)) {
@@ -68,7 +71,7 @@ export async function PATCH(
     }
 
     await awardPoints(user.id, "roadmap_node_complete", {
-      roadmapId: params.id,
+      roadmapId: resolvedParams.id,
       nodeIndex: body.completeNode,
     });
 
@@ -88,6 +91,7 @@ export async function DELETE(
   }
 
   await dbConnect();
-  await Roadmap.findByIdAndDelete(params.id);
+  const resolvedParams = await params;
+  await Roadmap.findByIdAndDelete(resolvedParams.id);
   return NextResponse.json({ message: "Roadmap deleted" });
 }

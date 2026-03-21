@@ -67,6 +67,7 @@ const config: Config = {
         "pulse-slow": "pulse 3s infinite",
         "bounce-soft": "bounceSoft 0.6s ease-out",
         "streak-glow": "streakGlow 2s infinite",
+        "heartbeat": "heartbeat 2s linear infinite",
       },
       keyframes: {
         fadeIn: {
@@ -84,6 +85,10 @@ const config: Config = {
         streakGlow: {
           "0%, 100%": { boxShadow: "0 0 5px rgba(239,68,68,0.3)" },
           "50%": { boxShadow: "0 0 20px rgba(239,68,68,0.6)" },
+        },
+        heartbeat: {
+          "0%": { strokeDashoffset: "2000" },
+          "100%": { strokeDashoffset: "0" },
         },
       },
     },
