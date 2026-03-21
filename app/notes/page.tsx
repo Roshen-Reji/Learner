@@ -38,7 +38,12 @@ export default function NotesPage() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const { startUpload } = useUploadThing("notesUploader");
+  const { startUpload } = useUploadThing("notesUploader", {
+    onUploadError: (e) => {
+      toast.error(`Vercel Upload Error: ${e.message}`);
+      setUploading(false);
+    },
+  });
 
   useEffect(() => {
     fetchNotes();
@@ -65,7 +70,10 @@ export default function NotesPage() {
     try {
       // 1. Upload direct to AWS via UploadThing
       const uploadRes = await startUpload([file]);
-      if (!uploadRes || !uploadRes[0]) throw new Error("AWS Upload failed. (If on Vercel, check UPLOADTHING_SECRET or NEXTAUTH_URL env vars!)");
+      if (!uploadRes || !uploadRes[0]) {
+        // Error is handled by onUploadError callback above
+        return;
+      }
       
       const fileUrl = uploadRes[0].url;
       const fileKey = uploadRes[0].key;
