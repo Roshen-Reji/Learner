@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role !== "moderator") {
@@ -39,7 +39,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role !== "moderator") {

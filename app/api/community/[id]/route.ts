@@ -6,7 +6,7 @@ import Post from "@/models/Post";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -36,7 +36,7 @@ export async function POST(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -66,7 +66,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   const session = await getServerSession(authOptions);
   if (!session) {

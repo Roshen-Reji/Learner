@@ -8,7 +8,7 @@ import { awardPoints } from "@/lib/points";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   await dbConnect();
   const roadmap = await Roadmap.findById(params.id);
@@ -30,7 +30,7 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -80,7 +80,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role !== "moderator") {
