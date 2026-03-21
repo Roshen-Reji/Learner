@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import PWAProvider from "@/components/PWAProvider";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -17,15 +19,17 @@ export const metadata: Metadata = {
   keywords: ["IEEE", "learning", "aptitude", "coding", "roadmap", "leaderboard", "placement"],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen" suppressHydrationWarning>
-        <Providers>
+        <Providers session={session}>
           <PWAProvider />
           {children}
         </Providers>
