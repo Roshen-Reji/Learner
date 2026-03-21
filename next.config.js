@@ -9,7 +9,7 @@ const nextConfig = {
     ],
   },
   
-    serverComponentsExternalPackages: ["mongoose"],
+  serverExternalPackages: ["mongoose"],
 };
 
 module.exports = nextConfig;
