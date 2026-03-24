@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Placement from "@/models/Placement";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   await dbConnect();
   const { searchParams } = new URL(req.url);

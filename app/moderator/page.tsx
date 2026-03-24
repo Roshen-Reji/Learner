@@ -48,7 +48,7 @@ export default function ModeratorPage() {
   const [loading, setLoading] = useState(false);
 
   // Stats
-  const [stats, setStats] = useState({ users: 0, questions: 0, roadmaps: 0, placements: 0, notes: 0 });
+  const [stats, setStats] = useState({ users: 0, pendingQuestions: 0, totalQuestions: 0, roadmaps: 0, placements: 0, notes: 0 });
 
   // Create user form
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", branch: "CSE", year: 1, role: "student" });
@@ -110,15 +110,17 @@ export default function ModeratorPage() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [usersRes, questionsRes, roadmapsRes, placementsRes, notesRes] = await Promise.all([
+      const [usersRes, questionsRes, allAptitudeRes, roadmapsRes, placementsRes, notesRes] = await Promise.all([
         fetch("/api/users"),
         fetch("/api/aptitude?pending=true"),
+        fetch("/api/aptitude?all=true&filterCategory=all"),
         fetch("/api/roadmap?all=true"),
-        fetch("/api/placement"),
+        fetch(`/api/placement?t=${Date.now()}`),
         fetch("/api/notes"),
       ]);
       const u = await usersRes.json();
       const q = await questionsRes.json();
+      const allQ = await allAptitudeRes.json();
       const r = await roadmapsRes.json();
       const p = await placementsRes.json();
       const n = await notesRes.json();
@@ -133,7 +135,8 @@ export default function ModeratorPage() {
       setNotes(n);
       setStats({
         users: u.length,
-        questions: q.length,
+        pendingQuestions: q.length,
+        totalQuestions: allQ.length + q.length,
         roadmaps: r.length,
         placements: p.length,
         notes: n.length,
@@ -158,7 +161,7 @@ export default function ModeratorPage() {
   };
 
   const loadPlacements = async () => {
-    const res = await fetch("/api/placement");
+    const res = await fetch(`/api/placement?t=${Date.now()}`);
     setPlacements(await res.json());
   };
 
@@ -561,7 +564,7 @@ export default function ModeratorPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { label: "Total Users", value: stats.users, icon: Users, color: "from-blue-500 to-indigo-600" },
-                  { label: "Questions", value: stats.questions, icon: Brain, color: "from-amber-500 to-orange-600" },
+                  { label: "Questions", value: stats.totalQuestions, icon: Brain, color: "from-amber-500 to-orange-600" },
                   { label: "Roadmaps", value: stats.roadmaps, icon: Map, color: "from-emerald-500 to-teal-600" },
                   { label: "Live Notes", value: stats.notes, icon: FileText, color: "from-purple-500 to-fuchsia-600" },
                   { label: "Placements", value: stats.placements, icon: Briefcase, color: "from-pink-500 to-rose-600" },
@@ -598,10 +601,10 @@ export default function ModeratorPage() {
                 </div>
               </div>
 
-              {stats.questions > 0 && (
+              {stats.pendingQuestions > 0 && (
                 <div className="card border-l-4 border-l-warning">
                   <div className="flex items-center gap-2 text-amber-600 font-semibold text-sm">
-                    <AlertCircle size={16} /> {stats.questions} questions pending approval
+                    <AlertCircle size={16} /> {stats.pendingQuestions} questions pending approval
                   </div>
                   <button onClick={() => setActiveTab("questions")} className="text-primary text-sm font-medium mt-1 hover:underline">
                     Review now →

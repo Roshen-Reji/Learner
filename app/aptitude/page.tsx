@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import Sidebar from "@/components/layout/Sidebar";
 import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
 import toast from "react-hot-toast";
@@ -36,19 +37,19 @@ type Mode = "qotd" | "sprint" | "browse";
 
 export default function AptitudePage() {
   const { data: session, update } = useSession();
-  
+
   // App State
   const [isMounted, setIsMounted] = useState(false);
   const [tab, setTab] = useState<Tab>("coding");
   const [mode, setMode] = useState<Mode>("qotd");
   const [isHighIQ, setIsHighIQ] = useState(false);
-  
+
   // Data State
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
-  
+
   // Interactive State
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<{
@@ -58,10 +59,28 @@ export default function AptitudePage() {
     alreadyAttempted?: boolean;
   } | null>(null);
   const [answeredSet, setAnsweredSet] = useState<Set<string>>(new Set());
-  
+
   // Timer
   const [sprintTimer, setSprintTimer] = useState(300);
   const [sprintActive, setSprintActive] = useState(false);
+
+  // Framer Motion Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { type: "spring" as const, stiffness: 300, damping: 24 } 
+    }
+  };
 
   // Eliminate Hydration Mismatch
   useEffect(() => {
@@ -93,24 +112,24 @@ export default function AptitudePage() {
     setSelected(null);
     setResult(null);
     setScore(0);
-    
+
     try {
       const res = await fetch(`/api/aptitude?category=${tab}&mode=${mode}&highIq=${isHighIQ}`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
-      
+
       setQuestions(data);
       const preAttempted = new Set<string>();
       let preScore = 0;
-      
+
       data.forEach((q: Question) => {
         if (q.attempted) preAttempted.add(q._id);
         if (q.isCorrect) preScore += 1;
       });
-      
+
       setAnsweredSet(preAttempted);
       setScore(preScore);
-      
+
       if (mode === "sprint") {
         setSprintTimer(data.length > 0 ? 300 : 0);
         setSprintActive(data.length > 0);
@@ -126,7 +145,7 @@ export default function AptitudePage() {
     if (result !== null) return;
     const qId = questions[currentQ]._id;
     if (answeredSet.has(qId)) return;
-    
+
     setSelected(index);
     try {
       const res = await fetch("/api/aptitude/answer", {
@@ -137,7 +156,7 @@ export default function AptitudePage() {
       const data = await res.json();
       setResult(data);
       setAnsweredSet(prev => new Set(prev).add(qId));
-      
+
       if (data.alreadyAttempted) {
         toast("Already answered previously.", { icon: "ℹ️" });
       } else if (data.correct) {
@@ -174,7 +193,7 @@ export default function AptitudePage() {
       <Sidebar />
       <main className="relative z-10 lg:ml-72 pt-20 lg:pt-8 pb-32 lg:pb-8 min-h-screen flex flex-col">
         <div className="max-w-4xl mx-auto px-4 sm:px-8 w-full flex-1 flex flex-col">
-          
+
           {/* Header & Main Toggles */}
           <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
@@ -185,7 +204,7 @@ export default function AptitudePage() {
                 Challenge your logic with daily assessments.
               </p>
             </div>
-            
+
             <div className="flex bg-white/50 dark:bg-slate-800/50 p-1 r-xl shadow-inner border border-white/60 dark:border-white/10 w-fit rounded-xl">
               <button
                 onClick={() => setIsHighIQ(false)}
@@ -205,8 +224,8 @@ export default function AptitudePage() {
           {/* Navigation Bars */}
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar snap-x">
             {[
-              { key: "coding" as Tab, label: "Logic", e: "💻" },
-              { key: "numerical" as Tab, label: "Quants", e: "🔢" },
+              { key: "coding" as Tab, label: "Coding", e: "💻" },
+              { key: "numerical" as Tab, label: "Numericals", e: "🔢" },
               { key: "verbal" as Tab, label: "Verbal", e: "📝" },
             ].map((t) => (
               <button
@@ -219,7 +238,12 @@ export default function AptitudePage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8"
+          >
             {[
               { key: "qotd" as Mode, label: "Daily Challenge", icon: Zap, c: "bg-amber-400 text-white" },
               { key: "sprint" as Mode, label: "5-min Sprint", icon: Clock, c: "bg-primary/10 text-primary" },
@@ -228,10 +252,13 @@ export default function AptitudePage() {
               const Icon = m.icon;
               const active = mode === m.key;
               return (
-                <button
+                <motion.button
+                  variants={itemVariants}
                   key={m.key}
                   onClick={() => setMode(m.key)}
-                  className={`relative overflow-hidden text-left p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] transition-all backdrop-blur-xl border ${active ? "bg-white/90 dark:bg-slate-800/90 border-primary ring-2 ring-primary/30 transform scale-[1.02] shadow-xl" : "bg-white/50 dark:bg-slate-900/50 border-white/60 hover:-translate-y-1 hover:bg-white text-text-secondary"}`}
+                  className={`relative overflow-hidden text-left p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] transition-all backdrop-blur-xl border ${active ? "bg-white/90 dark:bg-slate-800/90 border-primary ring-2 ring-primary/30 shadow-xl" : "bg-white/50 dark:bg-slate-900/50 border-white/60 hover:-translate-y-1 hover:bg-white text-text-secondary"}`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <div className="flex items-center gap-3 relative z-10">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-inner ${active ? "bg-gradient-to-br from-primary to-blue-600 text-white" : "bg-white/80 dark:bg-slate-800"}`}>
@@ -239,10 +266,10 @@ export default function AptitudePage() {
                     </div>
                     <p className={`font-extrabold text-sm sm:text-base ${active ? "text-primary dark:text-blue-400" : ""}`}>{m.label}</p>
                   </div>
-                </button>
+                </motion.button>
               );
             })}
-          </div>
+          </motion.div>
 
           {/* Sprint HUD */}
           {mode === "sprint" && sprintActive && questions.length > 0 && (
@@ -256,7 +283,7 @@ export default function AptitudePage() {
               </div>
               <div className="text-right">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-white/80">Score</p>
-                <p className="text-2xl sm:text-3xl font-black">{score}<span className="text-white/50 text-lg">/{questions.length}</span></p>
+                <p className="text-2xl sm:text-3xl font-black">{score}</p>
               </div>
             </div>
           )}
@@ -293,17 +320,17 @@ export default function AptitudePage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                   <button onClick={fetchQuestions} className="bg-primary hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-full flex justify-center items-center gap-2"><RefreshCw size={18}/> Retry Set</button>
+                  <button onClick={fetchQuestions} className="bg-primary hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-full flex justify-center items-center gap-2"><RefreshCw size={18} /> Retry Set</button>
                 </div>
               </div>
             ) : (
               <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/60 sm:rounded-[2.5rem] rounded-2xl p-5 sm:p-10 shadow-2xl relative overflow-hidden animate-fade-in">
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
                   <div className="flex gap-3 items-center">
-                    <span className="bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-xl font-black shadow-inner">Q <span className="text-primary">{currentQ+1}</span>/{questions.length}</span>
-                    {questions[currentQ].aiGenerated && <span className="bg-cyan-500/10 text-cyan-700 px-3 py-1.5 rounded-xl font-bold text-xs flex gap-1 items-center"><Bot size={14}/> AI Assisted</span>}
+                    <span className="bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-xl font-black shadow-inner">Q <span className="text-primary">{currentQ + 1}</span>{mode !== 'sprint' && `/${questions.length}`}</span>
+                    {questions[currentQ].aiGenerated && <span className="bg-cyan-500/10 text-cyan-700 px-3 py-1.5 rounded-xl font-bold text-xs flex gap-1 items-center"><Bot size={14} /> AI Assisted</span>}
                   </div>
-                  <span className="bg-emerald-500/10 text-emerald-700 font-black px-3 py-1.5 rounded-xl flex items-center gap-2"><Trophy size={16}/> {score} Pts</span>
+                  <span className="bg-emerald-500/10 text-emerald-700 font-black px-3 py-1.5 rounded-xl flex items-center gap-2"><Trophy size={16} /> {score} Pts</span>
                 </div>
 
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text-primary mb-8 leading-tight">{questions[currentQ].text}</h2>
@@ -329,8 +356,8 @@ export default function AptitudePage() {
                       <button key={i} onClick={() => handleAnswer(i)} disabled={result !== null || qAnswered} className={`w-full text-left flex items-center gap-4 transition-all rounded-2xl p-4 sm:p-5 border-2 ${style}`}>
                         <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black shrink-0 transition-colors ${badge}`}>{String.fromCharCode(65 + i)}</span>
                         <span className="flex-1">{opt}</span>
-                        {(result && i === result.correctIndex) || (qAnswered && i === questions[currentQ].correctIndex) ? <CheckCircle className="text-emerald-500" size={24}/> : null}
-                        {result && i === selected && !result.correct && <XCircle className="text-red-500" size={24}/>}
+                        {(result && i === result.correctIndex) || (qAnswered && i === questions[currentQ].correctIndex) ? <CheckCircle className="text-emerald-500" size={24} /> : null}
+                        {result && i === selected && !result.correct && <XCircle className="text-red-500" size={24} />}
                       </button>
                     );
                   })}
@@ -338,7 +365,7 @@ export default function AptitudePage() {
 
                 {result && (
                   <div className={`mt-8 p-6 rounded-2xl animate-fade-in border ${result.correct ? "bg-emerald-50 border-emerald-300" : "bg-red-50 border-red-300"} flex gap-4 items-start`}>
-                    <div className={`p-2 rounded-xl text-white mt-1 ${result.correct ? "bg-emerald-500": "bg-red-500"}`}>{result.correct ? <CheckCircle size={24}/> : <XCircle size={24}/>}</div>
+                    <div className={`p-2 rounded-xl text-white mt-1 ${result.correct ? "bg-emerald-500" : "bg-red-500"}`}>{result.correct ? <CheckCircle size={24} /> : <XCircle size={24} />}</div>
                     <div>
                       <p className={`font-black text-xl mb-2 ${result.correct ? "text-emerald-900" : "text-red-900"}`}>{result.correct ? "Phenomenal! That's correct!" : "Not quite right!"}</p>
                       {result.explanation && <p className="text-sm font-medium text-slate-700 bg-white/50 p-3 rounded-xl">{result.explanation}</p>}
@@ -348,11 +375,11 @@ export default function AptitudePage() {
 
                 {answeredSet.has(questions[currentQ]._id) && !result && (
                   <div className={`mt-8 p-6 rounded-2xl bg-slate-100/80 border border-slate-300 flex items-start gap-4`}>
-                     <div className="bg-slate-300 text-slate-700 p-2 rounded-xl mt-1"><CheckCircle size={24}/></div>
-                     <div>
-                       <p className="font-bold text-slate-800 text-lg">You've locked this in previously.</p>
-                       <p className="text-sm text-slate-600 mt-1">To maintain fair leaderboards, points are only awarded on your first attempt.</p>
-                     </div>
+                    <div className="bg-slate-300 text-slate-700 p-2 rounded-xl mt-1"><CheckCircle size={24} /></div>
+                    <div>
+                      <p className="font-bold text-slate-800 text-lg">You've locked this in previously.</p>
+                      <p className="text-sm text-slate-600 mt-1">To maintain fair leaderboards, points are only awarded on your first attempt.</p>
+                    </div>
                   </div>
                 )}
 

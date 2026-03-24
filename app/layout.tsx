@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import PWAProvider from "@/components/PWAProvider";
+import SmoothScroll from "@/components/SmoothScroll";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -30,8 +31,10 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen" suppressHydrationWarning>
         <Providers session={session}>
-          <PWAProvider />
-          {children}
+          <SmoothScroll>
+            <PWAProvider />
+            {children}
+          </SmoothScroll>
         </Providers>
       </body>
     </html>

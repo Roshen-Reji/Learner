@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { motion } from "framer-motion";
 import Sidebar from "@/components/layout/Sidebar";
 import toast from "react-hot-toast";
 import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
@@ -48,6 +49,24 @@ export default function PlacementPage() {
   const [branchFilter, setBranchFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.98 },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { type: "spring" as const, stiffness: 300, damping: 24 } 
+    }
+  };
+
   useEffect(() => {
     fetchPlacements();
   }, [branchFilter]);
@@ -55,8 +74,8 @@ export default function PlacementPage() {
   const fetchPlacements = async () => {
     setLoading(true);
     try {
-      const params = branchFilter !== "all" ? `?branch=${branchFilter}` : "";
-      const res = await fetch(`/api/placement${params}`);
+      const qs = branchFilter !== "all" ? `branch=${branchFilter}&t=${Date.now()}` : `t=${Date.now()}`;
+      const res = await fetch(`/api/placement?${qs}`);
       const data = await res.json();
       setPlacements(data);
     } catch {
@@ -183,7 +202,12 @@ export default function PlacementPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full">
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full"
+            >
               {sorted.map((p) => {
                 const expired = isExpired(p.deadline);
                 const days = daysLeft(p.deadline);
@@ -202,7 +226,8 @@ export default function PlacementPage() {
                 }
 
                 return (
-                  <div
+                  <motion.div
+                    variants={itemVariants}
                     key={p._id}
                     className={`group relative overflow-hidden bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl border ${
                       urgent && !expired ? "border-rose-400 dark:border-rose-500/50 shadow-[0_5px_30px_rgba(244,63,94,0.15)]" : "border-white/60 dark:border-white/10 shadow-lg"
@@ -321,10 +346,10 @@ export default function PlacementPage() {
                         </a>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </div>
       </main>

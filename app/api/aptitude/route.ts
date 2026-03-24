@@ -71,6 +71,10 @@ export async function GET(req: NextRequest) {
     
     // Construct the strictest query: must be approved, match the category, and match the target branch constraints
     const matchQuery: any = { category, approved: true };
+    if (userId) {
+      matchQuery.attemptedBy = { $ne: userId };
+    }
+    
     if (isHighIQ) {
       matchQuery.isHighIQ = true;
     } else {
@@ -105,12 +109,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(question ? [formatQuestionClient(question, userId)] : []);
     }
 
-    // mode: SPRINT (5 Random Problems)
+    // mode: SPRINT (Endless till timer runs out - aggregating 100 random problems)
     if (mode === "sprint") {
-      // Safely aggregate exactly 5 random matching questions seamlessly
+      // Safely aggregate up to 100 random matching questions seamlessly
       const randomFive = await Question.aggregate([
         { $match: matchQuery },
-        { $sample: { size: 5 } }
+        { $sample: { size: 100 } }
       ]);
       return NextResponse.json(randomFive.map((q) => formatQuestionClient(q, userId)));
     }

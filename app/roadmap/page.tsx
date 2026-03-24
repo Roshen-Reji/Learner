@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import Sidebar from "@/components/layout/Sidebar";
 import toast from "react-hot-toast";
 import { Map, CheckCircle, ChevronRight, ArrowLeft, BookOpen, Star, Sparkles, Navigation, Layers, Check, MoveRight, Lock } from "lucide-react";
@@ -39,6 +40,25 @@ export default function RoadmapPage() {
   const [quizResult, setQuizResult] = useState<boolean | null>(null);
   const [customSkill, setCustomSkill] = useState("");
   const [generating, setGenerating] = useState(false);
+
+  // Framer Motion Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, x: 20 },
+    show: { opacity: 1, x: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+  };
+
+  const nodeVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+  };
 
   useEffect(() => {
     fetchRoadmaps();
@@ -185,13 +205,19 @@ export default function RoadmapPage() {
                 <p className="text-text-secondary mt-2 text-sm">Generate your first AI roadmap above!</p>
               </div>
             ) : (
-              <div className="w-full overflow-x-auto snap-x snap-mandatory flex gap-4 sm:gap-5 px-4 sm:px-8 pb-8 pt-2 custom-scrollbar items-center">
+              <motion.div 
+                variants={containerVariants} 
+                initial="hidden" 
+                animate="show" 
+                className="w-full overflow-x-auto snap-x snap-mandatory flex gap-4 sm:gap-5 px-4 sm:px-8 pb-8 pt-2 custom-scrollbar items-center"
+              >
                 {/* 
                   w-[85vw] on mobile gives a 15vw peek of the next card, 
                   satisfying the "swipe preview" requirement perfectly.
                 */}
                 {roadmaps.map((rm) => (
-                  <button
+                  <motion.button
+                    variants={cardVariants}
                     key={rm._id}
                     onClick={() => openRoadmap(rm)}
                     className="group relative w-[85vw] sm:w-[360px] lg:w-[400px] h-[60vh] sm:h-[65vh] min-h-[400px] max-h-[550px] shrink-0 snap-center rounded-3xl sm:rounded-[2.5rem] overflow-hidden shadow-[0_15px_40px_-15px_rgba(0,0,0,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(0,120,255,0.4)] transition-all duration-500 scale-[0.98] hover:scale-100 text-left border border-white/40 dark:border-white/5 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900"
@@ -238,12 +264,12 @@ export default function RoadmapPage() {
                         Start Journey <MoveRight size={16} className="group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
-                  </button>
+                  </motion.button>
                 ))}
                 
                 {/* Spacer block so the last item can center correctly depending on margin */}
                 <div className="w-[10vw] sm:w-[calc(50vw-200px)] shrink-0 h-10" />
-              </div>
+              </motion.div>
             )}
           </div>
         </main>
@@ -323,7 +349,12 @@ export default function RoadmapPage() {
           </div>
 
           {/* Glassy Timeline */}
-          <div className="space-y-4 sm:space-y-6 relative before:absolute before:inset-y-0 before:left-6 sm:before:left-10 before:w-1 before:bg-gradient-to-b before:from-primary/30 before:via-secondary/30 before:to-transparent before:rounded-full before:shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+          <motion.div 
+            variants={containerVariants} 
+            initial="hidden" 
+            animate="show"
+            className="space-y-4 sm:space-y-6 relative before:absolute before:inset-y-0 before:left-6 sm:before:left-10 before:w-1 before:bg-gradient-to-b before:from-primary/30 before:via-secondary/30 before:to-transparent before:rounded-full before:shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+          >
             {selectedRoadmap.nodes
               .sort((a, b) => a.order - b.order)
               .map((node, i) => {
@@ -331,7 +362,7 @@ export default function RoadmapPage() {
                 const isActive = activeNode === i;
                 
                 return (
-                  <div key={i} className="relative z-10 pl-14 sm:pl-24">
+                  <motion.div variants={nodeVariants} key={i} className="relative z-10 pl-14 sm:pl-24">
                     {/* Node Dot / Checked Circle floating directly over the vertical bar */}
                     <div 
                       className={`absolute left-2.5 sm:left-6 top-5 sm:top-6 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm shadow-xl transition-all duration-500 z-20 ${
@@ -443,10 +474,10 @@ export default function RoadmapPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
-          </div>
+          </motion.div>
 
         </div>
       </main>
