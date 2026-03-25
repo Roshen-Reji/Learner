@@ -63,6 +63,8 @@ export default function AptitudePage() {
   // Timer
   const [sprintTimer, setSprintTimer] = useState(300);
   const [sprintActive, setSprintActive] = useState(false);
+  const [sprintState, setSprintState] = useState<"idle" | "ready" | "active" | "locked">("idle");
+  const [nextSprintDate, setNextSprintDate] = useState<string | null>(null);
 
   // Framer Motion Variants
   const containerVariants = {
@@ -106,7 +108,7 @@ export default function AptitudePage() {
     }
   }, [sprintTimer, sprintActive]);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (action?: string) => {
     setLoading(true);
     setCurrentQ(0);
     setSelected(null);
@@ -114,9 +116,40 @@ export default function AptitudePage() {
     setScore(0);
 
     try {
-      const res = await fetch(`/api/aptitude?category=${tab}&mode=${mode}&highIq=${isHighIQ}`);
+      const res = await fetch(`/api/aptitude?category=${tab}&mode=${mode}&highIq=${isHighIQ}${action ? `&action=${action}` : ""}`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
+
+      if (mode === "sprint") {
+        setLoading(false);
+        if (data.status === "locked") {
+          setSprintState("locked");
+          setNextSprintDate(data.nextAvailable);
+          setQuestions([]);
+          setSprintActive(false);
+          return;
+        } else if (data.status === "ready") {
+          setSprintState("ready");
+          setQuestions([]);
+          setSprintActive(false);
+          return;
+        } else if (data.status === "active") {
+          setSprintState("active");
+          setQuestions(data.questions);
+          setSprintTimer(data.remainingSeconds);
+          setSprintActive(true);
+          
+          const preAttempted = new Set<string>();
+          let preScore = 0;
+          data.questions.forEach((q: Question) => {
+            if (q.attempted) preAttempted.add(q._id);
+            if (q.isCorrect) preScore += 1;
+          });
+          setAnsweredSet(preAttempted);
+          setScore(preScore);
+          return;
+        }
+      }
 
       setQuestions(data);
       const preAttempted = new Set<string>();
@@ -130,14 +163,10 @@ export default function AptitudePage() {
       setAnsweredSet(preAttempted);
       setScore(preScore);
 
-      if (mode === "sprint") {
-        setSprintTimer(data.length > 0 ? 300 : 0);
-        setSprintActive(data.length > 0);
-      }
     } catch {
       toast.error("Error retrieving puzzles");
     } finally {
-      setLoading(false);
+      if (mode !== "sprint") setLoading(false);
     }
   };
 
@@ -290,7 +319,40 @@ export default function AptitudePage() {
 
           {/* Core Content */}
           <div className="flex-1 pb-10">
-            {loading ? (
+            {mode === "sprint" && sprintState === "locked" ? (
+              <div className="bg-slate-900 flex flex-col items-center justify-center p-8 sm:p-12 rounded-[2.5rem] text-center shadow-2xl relative overflow-hidden animate-fade-in border border-slate-800 w-full max-w-2xl mx-auto mt-6">
+                <div className="absolute -top-20 -right-20 w-48 h-48 bg-rose-500/20 blur-3xl rounded-full pointer-events-none" />
+                <div className="w-20 h-20 bg-gradient-to-br from-rose-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-rose-500/20 transform -rotate-3 relative z-10">
+                  <Clock className="text-white drop-shadow-md" size={40} />
+                </div>
+                <h3 className="text-3xl font-black text-white mb-3 tracking-tight relative z-10">Cooldown Active</h3>
+                <p className="text-slate-400 font-medium max-w-sm mx-auto mb-8 leading-relaxed relative z-10">
+                  Sprints are intense cognitive stress tests limited to once per week. Your next sprint unlocks on:
+                  <span className="block mt-4 text-xl font-bold text-rose-400 bg-rose-500/10 px-4 py-2 rounded-xl border border-rose-500/20 inline-block">
+                    {nextSprintDate ? new Date(nextSprintDate).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ""}
+                  </span>
+                </p>
+              </div>
+            ) : mode === "sprint" && sprintState === "ready" ? (
+              <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-[2.5rem] p-8 sm:p-12 text-center shadow-xl w-full max-w-2xl mx-auto mt-6 animate-fade-in relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                <div className="w-20 h-20 bg-gradient-to-br from-primary to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/20 transform rotate-3 relative z-10">
+                  <Zap className="text-white drop-shadow-md animate-pulse" size={40} />
+                </div>
+                <h3 className="text-3xl font-black text-text-primary mb-4 tracking-tight relative z-10">Ready for your Weekly Sprint?</h3>
+                <p className="text-text-secondary font-medium leading-relaxed max-w-md mx-auto mb-8 relative z-10">
+                  You are about to start a 5-minute uninterrupted logic test. 
+                  <strong className="text-rose-500 dark:text-rose-400 ml-1">This consumes your strict 1-week cooldown.</strong> 
+                  The timer will not pause if you refresh!
+                </p>
+                <button
+                  onClick={() => fetchQuestions("start")}
+                  className="relative z-10 bg-primary hover:bg-primary-hover text-white px-10 py-4 rounded-full font-black tracking-wide shadow-xl shadow-primary/30 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/40 flex justify-center items-center gap-2 mx-auto w-full sm:w-auto text-lg"
+                >
+                  <Zap size={20} /> START 5-MIN SPRINT
+                </button>
+              </div>
+            ) : loading ? (
               <div className="flex items-center justify-center h-48"><HeartbeatLoader message="SYNCING WITH SYSTEMS" /></div>
             ) : questions.length === 0 ? (
               <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-[2.5rem] p-10 text-center shadow-xl w-full max-w-lg mx-auto mt-6 animate-fade-in">
@@ -302,7 +364,7 @@ export default function AptitudePage() {
                   There are currently no active puzzles for "{tab}" under your selected context. Moderators sync new puzzles routinely—check back later!
                 </p>
                 <button
-                  onClick={fetchQuestions}
+                  onClick={() => fetchQuestions()}
                   className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-full font-bold shadow-md transition-all flex justify-center items-center gap-2 mx-auto"
                 >
                   <RefreshCw size={18} /> Refresh Board
@@ -320,7 +382,7 @@ export default function AptitudePage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <button onClick={fetchQuestions} className="bg-primary hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-full flex justify-center items-center gap-2"><RefreshCw size={18} /> Retry Set</button>
+                  <button onClick={() => fetchQuestions()} className="bg-primary hover:bg-blue-600 text-white font-bold px-8 py-3.5 rounded-full flex justify-center items-center gap-2"><RefreshCw size={18} /> Retry Set</button>
                 </div>
               </div>
             ) : (

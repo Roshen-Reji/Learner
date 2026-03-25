@@ -111,12 +111,56 @@ export async function GET(req: NextRequest) {
 
     // mode: SPRINT (Endless till timer runs out - aggregating 100 random problems)
     if (mode === "sprint") {
-      // Safely aggregate up to 100 random matching questions seamlessly
-      const randomFive = await Question.aggregate([
-        { $match: matchQuery },
-        { $sample: { size: 100 } }
-      ]);
-      return NextResponse.json(randomFive.map((q) => formatQuestionClient(q, userId)));
+      const action = searchParams.get("action");
+      const user = await User.findById(userId);
+      const now = new Date();
+      const lastSprint = user?.lastSprintStart;
+      
+      const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+      const FIVE_MINS_MS = 5 * 60 * 1000;
+
+      if (lastSprint) {
+        const timeSince = now.getTime() - new Date(lastSprint).getTime();
+        
+        // 1. Active Sprint (less than 5 minutes ago)
+        if (timeSince < FIVE_MINS_MS) {
+          const remainingSeconds = Math.floor((FIVE_MINS_MS - timeSince) / 1000);
+          const randomQuestions = await Question.aggregate([
+            { $match: matchQuery },
+            { $sample: { size: 100 } }
+          ]);
+          return NextResponse.json({
+            status: "active",
+            remainingSeconds,
+            questions: randomQuestions.map((q) => formatQuestionClient(q, userId))
+          });
+        }
+        
+        // 2. Locked Out (finished recently, wait 1 week)
+        if (timeSince < ONE_WEEK_MS) {
+          return NextResponse.json({
+            status: "locked",
+            nextAvailable: new Date(new Date(lastSprint).getTime() + ONE_WEEK_MS)
+          });
+        }
+      }
+
+      // 3. User is eligible. Only physically start/lock-in if action is passed.
+      if (action === "start") {
+        await User.findByIdAndUpdate(userId, { lastSprintStart: now });
+        const randomQuestions = await Question.aggregate([
+          { $match: matchQuery },
+          { $sample: { size: 100 } }
+        ]);
+        return NextResponse.json({
+          status: "active",
+          remainingSeconds: 300, // 5 mins
+          questions: randomQuestions.map((q) => formatQuestionClient(q, userId))
+        });
+      }
+
+      // 4. Default: User is ready, waiting for UI confirmation to start.
+      return NextResponse.json({ status: "ready" });
     }
 
     // mode: BROWSE (All valid questions for full practice)

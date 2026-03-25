@@ -13,6 +13,7 @@ export interface IUser extends Document {
   badges: string[];
   roadmapCap: number;
   isPremium: boolean;
+  lastSprintStart: Date | null;
   createdAt: Date;
 }
 
@@ -30,6 +31,7 @@ const UserSchema = new Schema<IUser>(
     badges: [{ type: String }],
     roadmapCap: { type: Number, default: 3 },
     isPremium: { type: Boolean, default: false },
+    lastSprintStart: { type: Date, default: null },
   },
   { timestamps: true }
 );
