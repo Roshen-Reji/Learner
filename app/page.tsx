@@ -1,547 +1,542 @@
+"use client";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function LandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
 
         :root {
-          --bg: #0b0e14;
-          --surface: #111520;
-          --surface-raised: #161b2a;
-          --border: rgba(255,255,255,0.06);
-          --border-hover: rgba(255,255,255,0.14);
-          --gold: #c9a84c;
-          --gold-light: #e8c97a;
-          --text: #e8e4dc;
-          --muted: #6e7491;
-          --accent: #3d5aed;
+          --bg:        #F4F6F0;
+          --surface:   #FFFFFF;
+          --surface2:  #EDEEE9;
+          --border:    #DDE0D8;
+          --green:     #2D6A4F;
+          --green-mid: #40916C;
+          --green-lt:  #D8EDDF;
+          --teal:      #1B7A6E;
+          --text:      #1C211A;
+          --muted:     #717870;
+          --radius:    14px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
+          font-family: 'Plus Jakarta Sans', sans-serif;
           background: var(--bg);
           color: var(--text);
-          font-family: 'DM Sans', sans-serif;
           font-size: 15px;
           line-height: 1.6;
-          min-height: 100vh;
-          overflow-x: hidden;
+          -webkit-font-smoothing: antialiased;
         }
 
-        .grain {
-          position: fixed;
-          inset: 0;
-          z-index: 0;
-          pointer-events: none;
-          opacity: 0.032;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-          background-size: 200px;
-        }
-
-        .mesh {
-          position: fixed;
-          inset: 0;
-          z-index: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(ellipse 60% 50% at 10% 20%, rgba(61,90,237,0.10) 0%, transparent 60%),
-            radial-gradient(ellipse 50% 60% at 90% 80%, rgba(201,168,76,0.07) 0%, transparent 60%),
-            radial-gradient(ellipse 40% 40% at 50% 50%, rgba(16,22,40,0.6) 0%, transparent 70%);
-        }
-
-        .wrapper {
-          position: relative;
-          z-index: 1;
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 0 32px;
-        }
-
-        /* ── NAV ── */
+        /* NAV */
         nav {
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          padding: 20px 0;
+          position: sticky; top: 0; z-index: 100;
+          background: rgba(244,246,240,0.88);
+          backdrop-filter: blur(14px);
           border-bottom: 1px solid var(--border);
-          backdrop-filter: blur(18px);
-          background: rgba(11,14,20,0.72);
-          margin-bottom: 0;
         }
 
         .nav-inner {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 0 32px;
+          max-width: 1080px; margin: 0 auto;
+          padding: 0 24px;
+          height: 64px;
+          display: flex; align-items: center; justify-content: space-between;
         }
 
         .logo {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 22px;
-          font-weight: 600;
-          letter-spacing: 0.03em;
-          color: var(--text);
-          text-decoration: none;
-          display: flex;
-          align-items: center;
-          gap: 8px;
+          font-family: 'Fraunces', serif;
+          font-size: 20px; font-weight: 600;
+          color: var(--text); text-decoration: none;
+          display: flex; align-items: center; gap: 9px;
+          letter-spacing: -0.01em;
         }
 
-        .logo-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: var(--gold);
-          display: inline-block;
-          box-shadow: 0 0 10px rgba(201,168,76,0.5);
+        .logo-mark {
+          width: 30px; height: 30px; border-radius: 8px;
+          background: var(--green);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 14px; color: #fff; flex-shrink: 0;
         }
 
         .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 32px;
-          list-style: none;
+          display: flex; align-items: center; gap: 4px; list-style: none;
         }
 
         .nav-links a {
-          color: var(--muted);
-          text-decoration: none;
-          font-size: 13px;
-          font-weight: 500;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          transition: color 0.2s;
+          color: var(--muted); text-decoration: none;
+          font-size: 14px; font-weight: 500;
+          padding: 7px 14px; border-radius: 8px;
+          transition: background 0.18s, color 0.18s;
         }
 
-        .nav-links a:hover { color: var(--text); }
+        .nav-links a:hover { background: var(--surface2); color: var(--text); }
 
         .btn-login {
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          font-weight: 500;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: var(--bg) !important;
-          background: var(--gold);
-          padding: 9px 22px;
-          border-radius: 4px;
-          text-decoration: none;
-          transition: background 0.2s, box-shadow 0.2s !important;
-          box-shadow: 0 0 20px rgba(201,168,76,0.18);
+          background: var(--green) !important;
+          color: #fff !important;
+          padding: 8px 20px !important; border-radius: 8px !important;
+          font-weight: 600 !important; font-size: 14px !important;
+          transition: background 0.18s, transform 0.18s !important;
         }
-
         .btn-login:hover {
-          background: var(--gold-light) !important;
-          color: var(--bg) !important;
-          box-shadow: 0 0 28px rgba(201,168,76,0.32) !important;
+          background: var(--green-mid) !important;
+          transform: translateY(-1px) !important;
         }
 
-        /* ── HERO ── */
+        /* Hamburger */
+        .hamburger {
+          display: none;
+          flex-direction: column; gap: 5px;
+          background: none; border: none; cursor: pointer; padding: 6px;
+          border-radius: 8px;
+        }
+        .hamburger:hover { background: var(--surface2); }
+        .hamburger span {
+          display: block; width: 22px; height: 2px;
+          background: var(--text); border-radius: 2px;
+          transition: all 0.22s;
+        }
+        .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        .mobile-menu {
+          display: none;
+          flex-direction: column; gap: 2px;
+          padding: 12px 16px 16px;
+          border-top: 1px solid var(--border);
+          background: rgba(244,246,240,0.97);
+          backdrop-filter: blur(14px);
+        }
+        .mobile-menu.open { display: flex; }
+
+        .mobile-menu a {
+          color: var(--text); text-decoration: none;
+          font-size: 16px; font-weight: 500;
+          padding: 13px 16px; border-radius: 10px;
+          transition: background 0.15s;
+          display: block;
+        }
+        .mobile-menu a:hover { background: var(--surface2); }
+        .mobile-menu .m-login {
+          background: var(--green); color: #fff !important;
+          font-weight: 600; text-align: center; margin-top: 8px;
+        }
+        .mobile-menu .m-login:hover { background: var(--green-mid) !important; }
+
+        /* PAGE WRAP */
+        .page { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+        /* HERO */
         .hero {
-          padding: 120px 0 80px;
-          position: relative;
-        }
-
-        .hero-eyebrow {
-          display: inline-flex;
+          padding: 72px 0 56px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 48px;
           align-items: center;
-          gap: 10px;
-          font-size: 11px;
-          font-weight: 500;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--gold);
-          margin-bottom: 28px;
         }
 
-        .eyebrow-line {
-          width: 36px;
-          height: 1px;
-          background: var(--gold);
-          opacity: 0.6;
+        .hero-badge {
+          display: inline-flex; align-items: center; gap: 8px;
+          background: var(--green-lt); color: var(--green);
+          font-size: 12px; font-weight: 600;
+          letter-spacing: 0.06em; text-transform: uppercase;
+          padding: 5px 13px; border-radius: 100px;
+          margin-bottom: 22px;
+        }
+        .badge-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: var(--green-mid);
         }
 
         .hero h1 {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: clamp(52px, 8vw, 88px);
-          font-weight: 300;
-          line-height: 1.05;
-          letter-spacing: -0.01em;
-          color: var(--text);
-          margin-bottom: 28px;
-          max-width: 780px;
+          font-family: 'Fraunces', serif;
+          font-size: clamp(38px, 5vw, 58px);
+          font-weight: 500; line-height: 1.08;
+          letter-spacing: -0.025em;
+          color: var(--text); margin-bottom: 20px;
         }
-
-        .hero h1 em {
-          font-style: italic;
-          color: var(--gold-light);
-        }
+        .hero h1 em { font-style: italic; color: var(--green); }
 
         .hero p {
-          font-size: 16px;
-          font-weight: 300;
-          color: var(--muted);
-          max-width: 480px;
-          line-height: 1.75;
-          margin-bottom: 44px;
-        }
-
-        .hero-cta {
-          display: flex;
-          align-items: center;
-          gap: 20px;
-          flex-wrap: wrap;
-        }
-
-        .cta-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          background: var(--gold);
-          color: var(--bg);
-          font-size: 13px;
-          font-weight: 600;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          text-decoration: none;
-          padding: 14px 30px;
-          border-radius: 4px;
-          transition: all 0.25s;
-          box-shadow: 0 8px 32px rgba(201,168,76,0.22);
-        }
-
-        .cta-primary:hover {
-          background: var(--gold-light);
-          transform: translateY(-2px);
-          box-shadow: 0 14px 40px rgba(201,168,76,0.32);
-        }
-
-        .cta-arrow { font-size: 16px; transition: transform 0.2s; }
-        .cta-primary:hover .cta-arrow { transform: translateX(4px); }
-
-        .cta-secondary {
-          color: var(--muted);
-          font-size: 13px;
-          font-weight: 500;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .cta-secondary:hover { color: var(--text); }
-
-        /* ── STATS BAR ── */
-        .stats-bar {
-          display: flex;
-          gap: 0;
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          overflow: hidden;
-          margin: 72px 0;
-          background: var(--surface);
-        }
-
-        .stat {
-          flex: 1;
-          padding: 28px 32px;
-          border-right: 1px solid var(--border);
-          position: relative;
-        }
-
-        .stat:last-child { border-right: none; }
-
-        .stat-value {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 40px;
-          font-weight: 600;
-          line-height: 1;
-          color: var(--text);
-          margin-bottom: 6px;
-        }
-
-        .stat-value span {
-          color: var(--gold);
-          font-size: 28px;
-        }
-
-        .stat-label {
-          font-size: 11px;
-          font-weight: 500;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--muted);
-        }
-
-        /* ── CARDS ── */
-        .section-header {
-          display: flex;
-          align-items: baseline;
-          gap: 16px;
-          margin-bottom: 40px;
-        }
-
-        .section-tag {
-          font-size: 11px;
-          font-weight: 500;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--gold);
-          opacity: 0.8;
-        }
-
-        .section-title {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 32px;
-          font-weight: 400;
-          color: var(--text);
-        }
-
-        .cards {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 2px;
-          background: var(--border);
-          border-radius: 10px;
-          overflow: hidden;
-          margin-bottom: 100px;
-        }
-
-        .card {
-          background: var(--surface);
-          padding: 40px 36px;
-          text-decoration: none;
-          display: block;
-          position: relative;
-          overflow: hidden;
-          transition: background 0.3s;
-          cursor: pointer;
-        }
-
-        .card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, var(--gold), transparent);
-          opacity: 0;
-          transition: opacity 0.3s;
-        }
-
-        .card:hover { background: var(--surface-raised); }
-        .card:hover::before { opacity: 1; }
-
-        .card-number {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 11px;
-          font-weight: 400;
-          letter-spacing: 0.12em;
-          color: var(--muted);
+          font-size: 16px; font-weight: 300;
+          color: var(--muted); line-height: 1.75;
           margin-bottom: 36px;
         }
 
-        .card-icon {
-          width: 44px;
-          height: 44px;
-          border-radius: 10px;
-          background: rgba(201,168,76,0.08);
-          border: 1px solid rgba(201,168,76,0.15);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          margin-bottom: 24px;
-          transition: background 0.3s, border-color 0.3s;
+        .hero-btns {
+          display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
         }
 
-        .card:hover .card-icon {
-          background: rgba(201,168,76,0.14);
-          border-color: rgba(201,168,76,0.3);
+        .btn-primary {
+          display: inline-flex; align-items: center; gap: 8px;
+          background: var(--green); color: #fff;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 14px; font-weight: 600;
+          padding: 13px 26px; border-radius: 10px;
+          text-decoration: none;
+          transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+          box-shadow: 0 4px 16px rgba(45,106,79,0.22);
+        }
+        .btn-primary:hover {
+          background: var(--green-mid);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(45,106,79,0.28);
         }
 
-        .card h2 {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 26px;
-          font-weight: 600;
-          color: var(--text);
-          margin-bottom: 14px;
-          line-height: 1.2;
+        .btn-ghost {
+          display: inline-flex; align-items: center; gap: 7px;
+          color: var(--muted); font-size: 14px; font-weight: 500;
+          text-decoration: none; padding: 13px 18px; border-radius: 10px;
+          border: 1px solid var(--border);
+          background: var(--surface);
+          transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+
+        /* Hero Visual */
+        .hero-visual { display: flex; justify-content: center; align-items: center; }
+
+        .visual-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 20px;
+          padding: 28px;
+          width: 100%; max-width: 320px;
+          box-shadow: 0 8px 40px rgba(0,0,0,0.07);
         }
 
-        .card p {
-          font-size: 13.5px;
-          font-weight: 300;
-          color: var(--muted);
-          line-height: 1.7;
-          margin-bottom: 32px;
+        .vc-header {
+          display: flex; align-items: center;
+          justify-content: space-between; margin-bottom: 22px;
+        }
+        .vc-title {
+          font-family: 'Fraunces', serif;
+          font-size: 15px; font-weight: 500; color: var(--text);
+        }
+        .vc-badge {
+          font-size: 11px; font-weight: 600;
+          background: var(--green-lt); color: var(--green);
+          padding: 3px 10px; border-radius: 100px;
         }
 
-        .card-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--gold);
-          opacity: 0.7;
-          transition: opacity 0.2s, gap 0.2s;
+        .progress-list { display: flex; flex-direction: column; gap: 14px; }
+        .prog-top {
+          display: flex; justify-content: space-between;
+          font-size: 12.5px; font-weight: 500;
+          color: var(--text); margin-bottom: 7px;
+        }
+        .prog-top span:last-child { color: var(--muted); }
+        .prog-track {
+          height: 7px; background: var(--surface2);
+          border-radius: 100px; overflow: hidden;
+        }
+        .prog-fill {
+          height: 100%; border-radius: 100px;
+          background: linear-gradient(90deg, var(--green), var(--green-mid));
         }
 
-        .card:hover .card-link {
-          opacity: 1;
-          gap: 12px;
+        .vc-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+
+        .vc-streak { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+        .streak-icon {
+          width: 32px; height: 32px; border-radius: 8px;
+          background: #FFF3E0;
+          display: flex; align-items: center; justify-content: center; font-size: 16px;
+        }
+        .streak-val {
+          font-family: 'Fraunces', serif;
+          font-size: 18px; font-weight: 600; color: var(--text);
         }
 
-        /* ── FOOTER ── */
+        /* STATS */
+        .stats {
+          display: grid; grid-template-columns: repeat(4, 1fr);
+          gap: 12px; margin: 48px 0;
+        }
+        .stat-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 22px 20px;
+        }
+        .stat-num {
+          font-family: 'Fraunces', serif;
+          font-size: 32px; font-weight: 500;
+          color: var(--text); line-height: 1; margin-bottom: 5px;
+        }
+        .stat-num sup { font-size: 18px; color: var(--green-mid); }
+        .stat-desc { font-size: 12px; font-weight: 500; color: var(--muted); }
+
+        /* MODULES */
+        .section-label {
+          font-size: 11.5px; font-weight: 600;
+          letter-spacing: 0.1em; text-transform: uppercase;
+          color: var(--green); margin-bottom: 10px;
+        }
+        .section-title {
+          font-family: 'Fraunces', serif;
+          font-size: 30px; font-weight: 500;
+          color: var(--text); margin-bottom: 28px;
+          letter-spacing: -0.02em;
+        }
+
+        .modules {
+          display: grid; grid-template-columns: repeat(3, 1fr);
+          gap: 16px; margin-bottom: 80px;
+        }
+
+        .mod-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 18px;
+          padding: 32px 28px;
+          text-decoration: none;
+          display: flex; flex-direction: column;
+          transition: transform 0.22s, box-shadow 0.22s, border-color 0.22s;
+          position: relative; overflow: hidden;
+        }
+        .mod-card::after {
+          content: '';
+          position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+          background: linear-gradient(90deg, var(--green), var(--teal));
+          opacity: 0; transition: opacity 0.25s;
+          border-radius: 0 0 18px 18px;
+        }
+        .mod-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.09);
+          border-color: rgba(45,106,79,0.2);
+        }
+        .mod-card:hover::after { opacity: 1; }
+
+        .mod-icon {
+          width: 48px; height: 48px; border-radius: 12px;
+          background: var(--green-lt);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 22px; margin-bottom: 22px; flex-shrink: 0;
+        }
+        .mod-tag {
+          font-size: 11px; font-weight: 600;
+          letter-spacing: 0.08em; text-transform: uppercase;
+          color: var(--green); margin-bottom: 8px;
+        }
+        .mod-title {
+          font-family: 'Fraunces', serif;
+          font-size: 22px; font-weight: 500;
+          color: var(--text); margin-bottom: 10px;
+          letter-spacing: -0.01em; line-height: 1.2;
+        }
+        .mod-desc {
+          font-size: 13.5px; font-weight: 400;
+          color: var(--muted); line-height: 1.7;
+          flex: 1; margin-bottom: 24px;
+        }
+        .mod-link {
+          display: inline-flex; align-items: center; gap: 6px;
+          font-size: 13px; font-weight: 600;
+          color: var(--green); text-decoration: none;
+          transition: gap 0.2s;
+        }
+        .mod-card:hover .mod-link { gap: 10px; }
+
+        /* FOOTER */
         footer {
           border-top: 1px solid var(--border);
-          padding: 32px 0;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+          padding: 28px 0;
+          display: flex; justify-content: space-between; align-items: center;
+          flex-wrap: wrap; gap: 12px;
         }
-
         .footer-logo {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 16px;
-          color: var(--muted);
-          font-weight: 400;
-          letter-spacing: 0.04em;
+          font-family: 'Fraunces', serif;
+          font-size: 17px; color: var(--text);
+          font-weight: 500; letter-spacing: -0.01em;
+          display: flex; align-items: center; gap: 8px;
         }
-
-        .footer-copy {
-          font-size: 12px;
-          color: var(--muted);
-          opacity: 0.5;
+        .footer-lm {
+          width: 24px; height: 24px; border-radius: 6px;
+          background: var(--green);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 11px; color: #fff;
         }
+        .footer-copy { font-size: 12px; color: var(--muted); }
 
+        /* MOBILE */
         @media (max-width: 768px) {
-          .cards { grid-template-columns: 1fr; }
-          .stats-bar { flex-direction: column; }
-          .stat { border-right: none; border-bottom: 1px solid var(--border); }
-          .stat:last-child { border-bottom: none; }
-          .hero h1 { font-size: 48px; }
-          .nav-links { gap: 16px; }
+          .nav-links { display: none; }
+          .hamburger { display: flex; }
+
+          .hero {
+            grid-template-columns: 1fr;
+            padding: 40px 0 36px;
+            gap: 36px;
+          }
+          .hero-visual { order: -1; }
+          .visual-card { max-width: 100%; }
+          .hero h1 { font-size: 38px; }
+          .hero p { font-size: 15px; }
+
+          .stats { grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 32px 0; }
+
+          .modules { grid-template-columns: 1fr; gap: 12px; margin-bottom: 56px; }
+          .mod-card { padding: 24px 22px; }
+          .mod-card:hover { transform: none; }
+
+          footer { flex-direction: column; align-items: flex-start; }
+        }
+
+        @media (max-width: 400px) {
+          .page { padding: 0 16px; }
+          .nav-inner { padding: 0 16px; }
+          .hero h1 { font-size: 33px; }
+          .hero-btns { flex-direction: column; align-items: stretch; }
+          .btn-primary, .btn-ghost { justify-content: center; }
         }
       `}</style>
-
-      <div className="grain" />
-      <div className="mesh" />
 
       {/* NAV */}
       <nav>
         <div className="nav-inner">
-          <a href="/" className="logo">
-            <span className="logo-dot" />
+          <Link href="/" className="logo">
+            <span className="logo-mark">L</span>
             IEEE Learn
-          </a>
+          </Link>
+
           <ul className="nav-links">
             <li><Link href="/aptitude">Aptitude</Link></li>
             <li><Link href="/placement">Placements</Link></li>
             <li><Link href="/roadmap">Roadmaps</Link></li>
             <li><Link href="/login" className="btn-login">Login</Link></li>
           </ul>
+
+          <button
+            className={`hamburger ${menuOpen ? "open" : ""}`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span /><span /><span />
+          </button>
+        </div>
+
+        <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
+          <Link href="/aptitude" onClick={() => setMenuOpen(false)}>⚡ Aptitude</Link>
+          <Link href="/placement" onClick={() => setMenuOpen(false)}>💼 Placements</Link>
+          <Link href="/roadmap" onClick={() => setMenuOpen(false)}>🗺️ Roadmaps</Link>
+          <Link href="/login" className="m-login" onClick={() => setMenuOpen(false)}>Login →</Link>
         </div>
       </nav>
 
-      {/* HERO */}
-      <div className="wrapper">
+      <div className="page">
+        {/* HERO */}
         <section className="hero">
-          <div className="hero-eyebrow">
-            <span className="eyebrow-line" />
-            Modern Learning Platform
+          <div>
+            <div className="hero-badge"><span className="badge-dot" />Now with AI Roadmaps</div>
+            <h1>Study smarter,<br /><em>land faster.</em></h1>
+            <p>
+              Everything you need to crack placements — aptitude practice,
+              curated job listings, and personalised learning paths, all in one place.
+            </p>
+            <div className="hero-btns">
+              <Link href="/aptitude" className="btn-primary">Start Practicing →</Link>
+              <Link href="/roadmap" className="btn-ghost">View Roadmaps</Link>
+            </div>
           </div>
-          <h1>
-            Sharpen your edge.<br />
-            <em>Land your role.</em>
-          </h1>
-          <p>
-            Structured aptitude training, curated placement opportunities,
-            and AI-powered roadmaps — all in one focused studio.
-          </p>
-          <div className="hero-cta">
-            <Link href="/aptitude" className="cta-primary">
-              Start Learning <span className="cta-arrow">→</span>
-            </Link>
-            <Link href="/roadmap" className="cta-secondary">Explore Roadmaps</Link>
+
+          <div className="hero-visual">
+            <div className="visual-card">
+              <div className="vc-header">
+                <span className="vc-title">Your Progress</span>
+                <span className="vc-badge">Week 3</span>
+              </div>
+              <div className="progress-list">
+                {[
+                  { label: "Logical Reasoning", pct: 78 },
+                  { label: "Quantitative Aptitude", pct: 54 },
+                  { label: "Verbal Ability", pct: 91 },
+                ].map(({ label, pct }) => (
+                  <div key={label}>
+                    <div className="prog-top"><span>{label}</span><span>{pct}%</span></div>
+                    <div className="prog-track">
+                      <div className="prog-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <hr className="vc-divider" />
+              <div className="vc-streak">
+                <div className="streak-icon">🔥</div>
+                <div>
+                  <div className="streak-val">14 days</div>
+                  <div style={{ fontSize: 12 }}>current streak</div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* STATS */}
-        <div className="stats-bar">
-          <div className="stat">
-            <div className="stat-value">12<span>K+</span></div>
-            <div className="stat-label">Practice Questions</div>
-          </div>
-          <div className="stat">
-            <div className="stat-value">340<span>+</span></div>
-            <div className="stat-label">Active Listings</div>
-          </div>
-          <div className="stat">
-            <div className="stat-value">98<span>%</span></div>
-            <div className="stat-label">Placement Rate</div>
-          </div>
-          <div className="stat">
-            <div className="stat-value">24<span>/7</span></div>
-            <div className="stat-label">AI Roadmaps</div>
-          </div>
+        <div className="stats">
+          {[
+            { num: "12", sup: "K+", desc: "Practice Questions" },
+            { num: "340", sup: "+", desc: "Active Job Listings" },
+            { num: "98", sup: "%", desc: "Placement Rate" },
+            { num: "50", sup: "+", desc: "Learning Roadmaps" },
+          ].map(({ num, sup, desc }) => (
+            <div className="stat-card" key={desc}>
+              <div className="stat-num">{num}<sup>{sup}</sup></div>
+              <div className="stat-desc">{desc}</div>
+            </div>
+          ))}
         </div>
 
-        {/* CARDS */}
-        <div className="section-header">
-          <span className="section-tag">Modules</span>
-          <span className="section-title">Where do you want to start?</span>
-        </div>
-
-        <div className="cards">
-          <Link href="/aptitude" className="card">
-            <div className="card-number">01 / 03</div>
-            <div className="card-icon">⚡</div>
-            <h2>Aptitude Engine</h2>
-            <p>
-              Sharpen logical reasoning with focused 5-minute sprints.
-              Track your progress across topics and difficulty tiers.
-            </p>
-            <span className="card-link">Begin Practice →</span>
-          </Link>
-
-          <Link href="/placement" className="card">
-            <div className="card-number">02 / 03</div>
-            <div className="card-icon">💼</div>
-            <h2>Placements</h2>
-            <p>
-              Hand-curated internships and fresher roles, filtered by your
-              domain, skills, and preferred company type.
-            </p>
-            <span className="card-link">Browse Roles →</span>
-          </Link>
-
-          <Link href="/roadmap" className="card">
-            <div className="card-number">03 / 03</div>
-            <div className="card-icon">🗺️</div>
-            <h2>Interactive Roadmaps</h2>
-            <p>
-              AI-generated learning pathways tailored to your goals,
-              recalibrated daily as the industry evolves.
-            </p>
-            <span className="card-link">Explore Paths →</span>
-          </Link>
+        {/* MODULES */}
+        <p className="section-label">Modules</p>
+        <h2 className="section-title">Pick where to begin</h2>
+        <div className="modules">
+          {[
+            {
+              href: "/aptitude", icon: "⚡", tag: "Practice",
+              title: "Aptitude Engine",
+              desc: "Sharpen logical, verbal and quant skills with focused 5-minute sprints and instant feedback on every answer.",
+              cta: "Begin Practice"
+            },
+            {
+              href: "/placement", icon: "💼", tag: "Opportunities",
+              title: "Placements",
+              desc: "Hand-curated internships and fresher roles filtered by your domain, skills, and preferred company type.",
+              cta: "Browse Roles"
+            },
+            {
+              href: "/roadmap", icon: "🗺️", tag: "Learning Paths",
+              title: "Interactive Roadmaps",
+              desc: "AI-generated pathways tailored to your goals, recalibrated daily as the industry evolves.",
+              cta: "Explore Paths"
+            },
+          ].map(({ href, icon, tag, title, desc, cta }) => (
+            <Link href={href} className="mod-card" key={href}>
+              <div className="mod-icon">{icon}</div>
+              <div className="mod-tag">{tag}</div>
+              <div className="mod-title">{title}</div>
+              <p className="mod-desc">{desc}</p>
+              <span className="mod-link">{cta} →</span>
+            </Link>
+          ))}
         </div>
 
         {/* FOOTER */}
         <footer>
-          <span className="footer-logo">Learn_Studio</span>
-          <span className="footer-copy">© 2025 — All rights reserved</span>
+          <div className="footer-logo">
+            <span className="footer-lm">L</span>
+            Learn_Studio
+          </div>
+          <span className="footer-copy">© 2025 Learn Studio · All rights reserved</span>
         </footer>
       </div>
     </>
