@@ -6,7 +6,7 @@ function getModel() {
     return null;
   }
   const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+  return genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 }
 
 export async function generateQuestions(
