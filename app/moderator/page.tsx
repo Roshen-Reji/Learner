@@ -31,7 +31,8 @@ import {
   FileText,
   Download,
   Settings,
-  ShieldAlert
+  ShieldAlert,
+  MessageSquareText,
 } from "lucide-react";
 import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
 
@@ -45,6 +46,7 @@ export default function ModeratorPage() {
   const [allRoadmaps, setAllRoadmaps] = useState<any[]>([]);
   const [placements, setPlacements] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
+  const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Stats
@@ -54,8 +56,9 @@ export default function ModeratorPage() {
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", branch: "CSE", year: 1, role: "student" });
   const [showPassword, setShowPassword] = useState(false);
 
-  // Edit user
+  // Edit / View user
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", email: "", branch: "", year: 1, role: "student", password: "", isPremium: false, roadmapCap: 3 });
 
   // Placement form
@@ -105,6 +108,7 @@ export default function ModeratorPage() {
     if (activeTab === "questions") { loadPendingQuestions(); loadAllQuestions(); }
     if (activeTab === "roadmaps") loadRoadmaps();
     if (activeTab === "placement") loadPlacements();
+    if (activeTab === "feedback") loadFeedbacks();
   }, [activeTab, qFilter]);
 
   const loadAll = async () => {
@@ -143,6 +147,13 @@ export default function ModeratorPage() {
       });
     } catch {}
     setLoading(false);
+  };
+
+  const loadFeedbacks = async () => {
+    try {
+      const res = await fetch("/api/feedback");
+      if (res.ok) setFeedbacks(await res.json());
+    } catch {}
   };
 
   const loadPendingQuestions = async () => {
@@ -498,6 +509,7 @@ export default function ModeratorPage() {
     { key: "roadmaps", label: "Roadmaps", icon: Map },
     { key: "notes", label: "Notes", icon: FileText },
     { key: "placement", label: "Placement", icon: Briefcase },
+    { key: "feedback", label: "Feedback", icon: MessageSquareText },
     { key: "ai", label: "AI Tools", icon: Bot },
   ];
 
@@ -784,33 +796,78 @@ export default function ModeratorPage() {
                         </div>
                       ) : (
                         /* View mode */
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm shrink-0">
-                            {u.name?.charAt(0)?.toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold text-text-primary">{u.name}</span>
-                              <span className={`badge text-xs ${u.role === "moderator" ? "badge-warning" : "badge-primary"}`}>{u.role}</span>
+                        <div className="flex flex-col gap-3">
+                          <div 
+                            className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 p-2 -m-2 rounded-xl transition-colors"
+                            onClick={() => setExpandedUserId(expandedUserId === u._id ? null : u._id)}
+                          >
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm shrink-0">
+                              {u.name?.charAt(0)?.toUpperCase()}
                             </div>
-                            <p className="text-sm text-text-secondary">{u.email} • {u.branch} Y{u.year} • {u.points || 0} pts</p>
-                            <div className="flex gap-2 mt-1.5 flex-wrap">
-                              <span className="text-[11px] bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full font-semibold border border-blue-100 shadow-sm">📝 Uploads: {u.noteCount || 0}</span>
-                              <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-100 shadow-sm">🗺️ Roadmaps: {u.roadmapCount || 0}/{u.roadmapCap || 3}</span>
-                              {u.isPremium && <span className="text-[11px] bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shadow-sm">👑 Premium</span>}
+                            <div className="flex-1 min-w-0 pointer-events-none">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-text-primary">{u.name}</span>
+                                <span className={`badge text-xs ${u.role === "moderator" ? "badge-warning" : "badge-primary"}`}>{u.role}</span>
+                                {u.ieeeStatus === "verified" && <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1">💳 IEEE True</span>}
+                              </div>
+                              <p className="text-sm text-text-secondary">{u.email} • {u.branch} Y{u.year} • {u.points || 0} pts</p>
+                            </div>
+                            <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <button onClick={() => startEditUser(u)} className="p-2 hover:bg-blue-50 rounded-lg text-primary transition" title="Edit User">
+                                <Edit3 size={15} />
+                              </button>
+                              <button onClick={() => resetPassword(u._id, u.name)} className="p-2 hover:bg-amber-50 rounded-lg text-amber-500 transition" title="Reset Password">
+                                <Key size={15} />
+                              </button>
+                              <button onClick={() => deleteUser(u._id, u.name)} className="p-2 hover:bg-red-50 rounded-lg text-error transition" title="Delete User">
+                                <Trash2 size={15} />
+                              </button>
                             </div>
                           </div>
-                          <div className="flex gap-1 shrink-0">
-                            <button onClick={() => startEditUser(u)} className="p-2 hover:bg-blue-50 rounded-lg text-primary transition" title="Edit User">
-                              <Edit3 size={15} />
-                            </button>
-                            <button onClick={() => resetPassword(u._id, u.name)} className="p-2 hover:bg-amber-50 rounded-lg text-amber-500 transition" title="Reset Password">
-                              <Key size={15} />
-                            </button>
-                            <button onClick={() => deleteUser(u._id, u.name)} className="p-2 hover:bg-red-50 rounded-lg text-error transition" title="Delete User">
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
+
+                          {/* Expanded Details Panel */}
+                          {expandedUserId === u._id && (
+                             <div className="pt-3 mt-1 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in relative z-10">
+                               <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-200 dark:border-white/10">
+                                 <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Activity Overview</h4>
+                                 <div className="flex flex-wrap gap-2">
+                                   <span className="text-[11px] bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 px-2.5 py-1 rounded-full font-semibold border border-blue-100 dark:border-blue-900 shadow-sm flex items-center gap-1">
+                                     📝 Uploads: {u.noteCount || 0}
+                                   </span>
+                                   <span className="text-[11px] bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full font-semibold border border-emerald-100 dark:border-emerald-900 shadow-sm flex items-center gap-1">
+                                     🗺️ Roadmaps: {u.roadmapCount || 0}/{u.roadmapCap || 3}
+                                   </span>
+                                   {u.isPremium && (
+                                     <span className="text-[11px] bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 px-2.5 py-1 rounded-full font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                       👑 Premium
+                                     </span>
+                                   )}
+                                 </div>
+                               </div>
+                               
+                               <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
+                                 <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">IEEE Membership Verification</h4>
+                                 {u.ieeeCardUrl ? (
+                                   <div className="flex flex-col gap-2 h-full justify-center">
+                                     <a 
+                                       href={u.ieeeCardUrl} 
+                                       target="_blank" 
+                                       rel="noopener noreferrer" 
+                                       className={`text-[11px] px-3 py-2 rounded-lg font-bold border shadow hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 w-full text-center
+                                         ${u.ieeeStatus === "verified" ? "bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700" : "bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-slate-600"}
+                                       `}
+                                     >
+                                        💳 View Source Card Image {u.ieeeStatus === "verified" ? "✓" : "(Pending Verification)"}
+                                     </a>
+                                   </div>
+                                 ) : (
+                                   <div className="flex items-center justify-center h-full opacity-60">
+                                     <p className="text-[10px] text-text-secondary italic font-medium">No membership card uploaded yet.</p>
+                                   </div>
+                                 )}
+                               </div>
+                             </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -848,30 +905,36 @@ export default function ModeratorPage() {
               {showAddQuestion && (
                 <form onSubmit={createManualQuestion} className="card border-2 border-primary/20 space-y-4 animate-fade-in">
                   <h3 className="font-bold text-base flex items-center gap-2"><Plus size={16} className="text-primary" /> Add New Question</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <select value={newQuestion.category} onChange={e => setNewQuestion({...newQuestion, category: e.target.value})} className="input-field">
-                      <option value="coding">Coding</option>
-                      <option value="numerical">Numerical</option>
-                      <option value="verbal">Verbal</option>
-                    </select>
-                    <select value={newQuestion.difficulty} onChange={e => setNewQuestion({...newQuestion, difficulty: e.target.value})} className="input-field">
-                      <option value="easy">Easy</option>
-                      <option value="medium">Medium</option>
-                      <option value="hard">Hard</option>
-                    </select>
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-700/30 p-3 sm:p-4 rounded-xl">
+                    <label className="flex items-center gap-3 cursor-pointer w-fit">
+                      <input type="checkbox" checked={newQuestion.isHighIQ} onChange={e => setNewQuestion({...newQuestion, isHighIQ: e.target.checked})} className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500 bg-white" />
+                      <span className="font-bold text-amber-800 dark:text-amber-500 flex items-center gap-2">
+                        🧠 Mark as High IQ Question (Global)
+                      </span>
+                    </label>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <select value={newQuestion.isHighIQ ? "true" : "false"} onChange={e => setNewQuestion({...newQuestion, isHighIQ: e.target.value === "true"})} className="input-field">
-                      <option value="false">Branch Specific</option>
-                      <option value="true">High IQ General</option>
-                    </select>
-                    {!newQuestion.isHighIQ && (
+
+                  {!newQuestion.isHighIQ && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <select value={newQuestion.category} onChange={e => setNewQuestion({...newQuestion, category: e.target.value})} className="input-field">
+                        <option value="coding">Coding</option>
+                        <option value="numerical">Numerical</option>
+                        <option value="verbal">Verbal</option>
+                      </select>
                       <select value={newQuestion.targetBranch} onChange={e => setNewQuestion({...newQuestion, targetBranch: e.target.value})} className="input-field">
                         {["General", "CSE", "ECE", "EEE", "ME", "CE", "IT", "AI&DS"].map(b => (
                           <option key={b} value={b}>{b}</option>
                         ))}
                       </select>
-                    )}
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <select value={newQuestion.difficulty} onChange={e => setNewQuestion({...newQuestion, difficulty: e.target.value})} className="input-field">
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
                   </div>
                   <textarea placeholder="Question text..." value={newQuestion.text} onChange={e => setNewQuestion({...newQuestion, text: e.target.value})} className="input-field !py-3" rows={2} required />
                   <div className="grid grid-cols-2 gap-2">
@@ -1285,17 +1348,25 @@ export default function ModeratorPage() {
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col sm:flex-row gap-3">
                     <input placeholder="Topic (e.g. Sorting Algorithms, SQL Joins)" value={aiTopic} onChange={e => setAiTopic(e.target.value)} className="input-field flex-1" />
-                    <select value={aiCategory} onChange={e => setAiCategory(e.target.value as any)} className="input-field !w-auto">
-                      <option value="coding">💻 Coding</option>
-                      <option value="numerical">🔢 Numerical</option>
-                      <option value="verbal">📝 Verbal</option>
-                    </select>
+                    {!aiIsHighIQ && (
+                      <select value={aiCategory} onChange={e => setAiCategory(e.target.value as any)} className="input-field !w-auto">
+                        <option value="coding">💻 Coding</option>
+                        <option value="numerical">🔢 Numerical</option>
+                        <option value="verbal">📝 Verbal</option>
+                      </select>
+                    )}
                   </div>
+
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 p-3 rounded-xl">
+                    <label className="flex items-center gap-2 cursor-pointer w-fit">
+                      <input type="checkbox" checked={aiIsHighIQ} onChange={e => setAiIsHighIQ(e.target.checked)} className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 bg-white" />
+                      <span className="font-bold text-amber-800 dark:text-amber-500 flex items-center gap-1 text-sm">
+                        🧠 Generate as High IQ Questions (Global)
+                      </span>
+                    </label>
+                  </div>
+
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <select value={aiIsHighIQ ? "true" : "false"} onChange={e => setAiIsHighIQ(e.target.value === "true")} className="input-field">
-                      <option value="false">Branch Specific / Standard</option>
-                      <option value="true">🧠 High IQ (Global)</option>
-                    </select>
                     {!aiIsHighIQ && (
                       <select value={aiTargetBranch} onChange={e => setAiTargetBranch(e.target.value)} className="input-field">
                         {["General", "CSE", "ECE", "EEE", "ME", "CE", "IT", "AI&DS"].map(b => (
@@ -1327,6 +1398,50 @@ export default function ModeratorPage() {
               </div>
             </div>
           )}
+
+          {/* ════════ FEEDBACK ════════ */}
+          {activeTab === "feedback" && (
+            <div className="space-y-4">
+              <div className="card">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold text-lg flex items-center gap-2">
+                    <MessageSquareText size={18} className="text-primary" /> User Feedback ({feedbacks.length})
+                  </h2>
+                  <button onClick={loadFeedbacks} className="text-text-secondary hover:text-primary transition p-1">
+                    <RefreshCw size={16} />
+                  </button>
+                </div>
+
+                {feedbacks.length === 0 ? (
+                  <div className="text-center py-12">
+                    <MessageSquareText className="mx-auto text-text-secondary mb-3" size={40} />
+                    <h3 className="text-base font-semibold text-text-primary">No feedback yet</h3>
+                    <p className="text-sm text-text-secondary mt-1">User feedback will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-1">
+                    {feedbacks.map((fb: any) => (
+                      <div key={fb._id} className="border border-border rounded-xl p-4 hover:border-primary/20 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xs font-bold">
+                              {fb.userName?.charAt(0)?.toUpperCase()}
+                            </div>
+                            <span className="font-semibold text-sm text-text-primary">{fb.userName}</span>
+                          </div>
+                          <span className="text-xs text-text-secondary">
+                            {new Date(fb.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap bg-gray-50 p-3 rounded-lg">{fb.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
       </main>
 

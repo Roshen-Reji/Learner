@@ -15,6 +15,9 @@ import {
   Trash2,
   Globe,
   Loader2,
+  Bell,
+  Pin,
+  Image,
 } from "lucide-react";
 import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
 
@@ -49,10 +52,24 @@ export default function CommunityPage() {
   const [replyText, setReplyText] = useState<Record<string, string>>({});
 
   // Global Chat State
-  const [activeTab, setActiveTab] = useState<"forums" | "global">("forums");
+  const [activeTab, setActiveTab] = useState<"forums" | "global" | "notices">("notices");
   const [chats, setChats] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Notices State
+  const [notices, setNotices] = useState<any[]>([]);
+  const [showNoticeForm, setShowNoticeForm] = useState(false);
+  const [newNotice, setNewNotice] = useState({ title: "", body: "", imageUrl: "", pinned: false });
+  const [readNoticeIds, setReadNoticeIds] = useState<Set<string>>(new Set());
+
+  // Load read status from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("readNotices");
+      if (stored) setReadNoticeIds(new Set(JSON.parse(stored)));
+    } catch {}
+  }, []);
 
   useEffect(() => {
     fetchPosts();
@@ -63,6 +80,9 @@ export default function CommunityPage() {
     if (activeTab === "global") {
       fetchChats();
       interval = setInterval(fetchChats, 3000);
+    }
+    if (activeTab === "notices") {
+      fetchNotices();
     }
     return () => clearInterval(interval);
   }, [activeTab]);
@@ -84,6 +104,51 @@ export default function CommunityPage() {
     }
     setLoading(false);
   };
+
+  const fetchNotices = async () => {
+    try {
+      const res = await fetch("/api/community/notices");
+      if (res.ok) setNotices(await res.json());
+    } catch {}
+  };
+
+  const createNotice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/community/notices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newNotice),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Notice published! 📢");
+      setShowNoticeForm(false);
+      setNewNotice({ title: "", body: "", imageUrl: "", pinned: false });
+      fetchNotices();
+    } catch {
+      toast.error("Failed to create notice");
+    }
+  };
+
+  const deleteNotice = async (id: string) => {
+    if (!confirm("Delete this notice?")) return;
+    try {
+      await fetch(`/api/community/notices?id=${id}`, { method: "DELETE" });
+      toast.success("Notice deleted");
+      fetchNotices();
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
+
+  const markNoticeRead = (id: string) => {
+    const next = new Set(readNoticeIds);
+    next.add(id);
+    setReadNoticeIds(next);
+    try { localStorage.setItem("readNotices", JSON.stringify([...next])); } catch {}
+  };
+
+  const unreadCount = notices.filter((n: any) => !readNoticeIds.has(n._id)).length;
 
   const createPost = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,11 +275,17 @@ export default function CommunityPage() {
             )}
           </div>
 
-          <div className="flex gap-2 mb-6 border-b border-border pb-3">
-             <button onClick={() => setActiveTab("forums")} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-sm ${activeTab === "forums" ? "bg-gradient-to-r from-primary to-secondary text-white" : "bg-white text-text-secondary hover:bg-gray-50 border border-border"}`}>
+          <div className="flex gap-2 mb-6 border-b border-border pb-3 overflow-x-auto no-scrollbar">
+             <button onClick={() => setActiveTab("notices")} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-sm shrink-0 ${activeTab === "notices" ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white" : "bg-white text-text-secondary hover:bg-gray-50 border border-border"}`}>
+               <Bell size={16} className={activeTab === "notices" ? "text-white" : "text-amber-500"} /> Notices
+               {unreadCount > 0 && (
+                 <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${activeTab === "notices" ? "bg-white text-amber-600" : "bg-amber-500 text-white"}`}>{unreadCount}</span>
+               )}
+             </button>
+             <button onClick={() => setActiveTab("forums")} className={`px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-sm shrink-0 ${activeTab === "forums" ? "bg-gradient-to-r from-primary to-secondary text-white" : "bg-white text-text-secondary hover:bg-gray-50 border border-border"}`}>
                Discussion Forums
              </button>
-             <button onClick={() => setActiveTab("global")} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-sm ${activeTab === "global" ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white" : "bg-white text-text-secondary hover:bg-gray-50 border border-border"}`}>
+             <button onClick={() => setActiveTab("global")} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-sm shrink-0 ${activeTab === "global" ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white" : "bg-white text-text-secondary hover:bg-gray-50 border border-border"}`}>
                <Globe size={16} className={activeTab === "global" ? "text-white" : "text-primary"} /> Live Chat
              </button>
           </div>
@@ -373,6 +444,89 @@ export default function CommunityPage() {
                    <Send size={18} />
                  </button>
               </form>
+            </div>
+          )}
+
+          {/* ════════ NOTICES TAB ════════ */}
+          {activeTab === "notices" && (
+            <div className="space-y-4 animate-fade-in">
+              {/* Moderator: Create Notice */}
+              {user?.role === "moderator" && (
+                <div className="mb-4">
+                  {!showNoticeForm ? (
+                    <button onClick={() => setShowNoticeForm(true)} className="btn-primary flex items-center gap-2">
+                      <Plus size={18} /> Create Notice
+                    </button>
+                  ) : (
+                    <div className="card animate-slide-up">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-lg flex items-center gap-2"><Bell size={18} className="text-amber-500" /> New Notice</h3>
+                        <button onClick={() => setShowNoticeForm(false)} className="p-1 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
+                      </div>
+                      <form onSubmit={createNotice} className="space-y-3">
+                        <input type="text" placeholder="Notice Title" value={newNotice.title} onChange={e => setNewNotice({ ...newNotice, title: e.target.value })} className="input-field" required />
+                        <textarea placeholder="Notice content..." value={newNotice.body} onChange={e => setNewNotice({ ...newNotice, body: e.target.value })} className="input-field !h-24 resize-none" required />
+                        <input type="url" placeholder="Poster/Image URL (optional)" value={newNotice.imageUrl} onChange={e => setNewNotice({ ...newNotice, imageUrl: e.target.value })} className="input-field" />
+                        <label className="flex items-center gap-2 text-sm font-medium text-text-primary cursor-pointer">
+                          <input type="checkbox" checked={newNotice.pinned} onChange={e => setNewNotice({ ...newNotice, pinned: e.target.checked })} className="w-4 h-4 rounded" />
+                          <Pin size={14} /> Pin this notice
+                        </label>
+                        <button type="submit" className="btn-primary w-full">Publish Notice 📢</button>
+                      </form>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Notices List */}
+              {notices.length === 0 ? (
+                <div className="card text-center py-16">
+                  <Bell className="mx-auto text-text-secondary mb-4" size={48} />
+                  <h3 className="text-lg font-semibold">No notices yet</h3>
+                  <p className="text-text-secondary mt-1">Official announcements and event posters will appear here</p>
+                </div>
+              ) : (
+                notices.map((notice: any) => {
+                  const isRead = readNoticeIds.has(notice._id);
+                  return (
+                   <div key={notice._id} onClick={() => markNoticeRead(notice._id)} className={`card relative overflow-hidden cursor-pointer transition-all ${notice.pinned ? "border-l-4 border-l-amber-400" : !isRead ? "border-l-4 border-l-blue-500 bg-blue-50/30 dark:bg-blue-900/10" : ""}`}>
+                     {!isRead && (
+                       <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
+                     )}
+                     {notice.pinned && isRead && (
+                       <div className="absolute top-3 right-3 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1">
+                         <Pin size={10} /> Pinned
+                       </div>
+                     )}
+                     {notice.pinned && !isRead && (
+                       <div className="absolute top-3 right-10 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1">
+                         <Pin size={10} /> Pinned
+                       </div>
+                     )}
+                     <h3 className="font-bold text-lg text-text-primary pr-20">{notice.title}</h3>
+                     <p className="text-sm text-text-secondary mt-1 whitespace-pre-wrap leading-relaxed">{notice.body}</p>
+                     {notice.imageUrl && (
+                       <div className="mt-3 rounded-xl overflow-hidden border border-border">
+                         <img src={notice.imageUrl} alt={notice.title} className="w-full max-h-80 object-cover" />
+                       </div>
+                     )}
+                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                       <div className="flex items-center gap-2 text-xs text-text-secondary">
+                         <span className="font-semibold">{notice.authorName}</span>
+                         <span>•</span>
+                         <span>{new Date(notice.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                         {!isRead && <span className="text-blue-500 font-bold">• NEW</span>}
+                       </div>
+                       {user?.role === "moderator" && (
+                         <button onClick={(e) => { e.stopPropagation(); deleteNotice(notice._id); }} className="text-red-400 hover:text-red-600 p-1 transition">
+                           <Trash2 size={14} />
+                         </button>
+                       )}
+                     </div>
+                   </div>
+                  );
+                })
+              )}
             </div>
           )}
         </div>

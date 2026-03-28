@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import {
   Home,
   MessageSquare,
@@ -13,7 +13,6 @@ import {
   Trophy,
   Bot,
   Settings,
-  LogOut,
   Flame,
   Star,
   Menu,
@@ -21,8 +20,10 @@ import {
   Shield,
   Maximize2,
   Minimize2,
+  Github,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import SettingsModal from "@/components/layout/SettingsModal";
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: Home },
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/placement", label: "Placement", icon: Briefcase },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/ai-chat", label: "AI Assistant", icon: Bot },
+  { href: "/github", label: "GitHub", icon: Github },
 ];
 
 export default function Sidebar() {
@@ -40,6 +42,7 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [liveData, setLiveData] = useState<{ points: number; streakDays: number } | null>(null);
   const user = session?.user as any;
 
@@ -91,122 +94,115 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Sidebar Desktop Floating Panel / Mobile Slide-in */}
       <aside
-        className={`fixed z-50 transform transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
+        className={`fixed z-[100] transform transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
         ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
-        top-0 left-0 h-full w-72 bg-white dark:bg-surface-dark border-r border-border dark:border-border-dark lg:border-r-0 lg:bg-transparent lg:dark:bg-transparent
+        top-0 left-0 h-[100dvh] w-72 lg:w-[280px] bg-white dark:bg-slate-900 border-r border-border dark:border-white/10 lg:border-r-0 lg:bg-transparent lg:dark:bg-transparent
         lg:top-4 lg:left-4 lg:h-[calc(100vh-32px)] lg:rounded-[2.5rem] ${glassContainer}
-        ${isMinimized ? "lg:w-20" : "lg:w-[260px]"} flex flex-col`}
+        ${isMinimized ? "lg:w-24" : "lg:w-[280px]"} flex flex-col overflow-hidden`}
       >
-        <div className="flex flex-col h-full overflow-hidden p-2 lg:p-3">
-          {/* Header/Logo */}
-          <div className={`p-4 lg:p-3 flex items-center relative border-b border-border dark:border-border-dark lg:border-white/20 shrink-0 ${isMinimized ? "lg:justify-center" : "justify-between"}`}>
-            <div className={`flex items-center gap-3 ${isMinimized ? "lg:mx-auto" : ""}`}>
-              <div className="w-10 h-10 lg:w-10 lg:h-10 gradient-bg rounded-2xl flex items-center justify-center shadow-md shrink-0">
-                <span className="text-white font-bold text-lg">I</span>
-              </div>
-              <div className={`transition-opacity duration-300 ${isMinimized ? "lg:hidden" : ""}`}>
-                <h1 className="text-xl lg:text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  IEEE Learn
-                </h1>
-                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
-                  Level Up Your Career
-                </p>
-              </div>
+        {/* Header/Logo */}
+        <div className={`p-6 lg:p-6 flex items-center relative shrink-0 ${isMinimized ? "lg:justify-center" : "justify-between"}`}>
+          <div className={`flex items-center gap-4 ${isMinimized ? "lg:mx-auto" : ""}`}>
+            <div className={`w-12 h-12 gradient-bg rounded-2xl flex items-center justify-center shadow-lg shrink-0 transition-all ${isMinimized ? "scale-90" : ""}`}>
+              <span className="text-white font-black text-xl">I</span>
             </div>
-            
-            {/* Minimize toggle button */}
-            <button 
-              onClick={() => setIsMinimized(!isMinimized)} 
-              className="hidden lg:flex p-2 rounded-xl text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-blue-400 hover:bg-white/40 dark:hover:bg-white/5 transition-all"
-              title={isMinimized ? "Expand sidebar" : "Minimize sidebar"}
-            >
-               {isMinimized ? <Maximize2 size={16} /> : <Menu size={18} />}
-            </button>
+            <div className={`transition-all duration-300 ${isMinimized ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : ""}`}>
+              <h1 className="text-2xl font-black bg-gradient-to-br from-primary to-secondary bg-clip-text text-transparent tracking-tight">
+                IEEE<span className="text-slate-700 dark:text-slate-300 font-bold ml-1">Learn</span>
+              </h1>
+            </div>
           </div>
+          <button 
+            onClick={() => setIsMinimized(!isMinimized)} 
+            className="hidden lg:flex p-2.5 rounded-xl text-text-secondary dark:text-gray-400 hover:text-primary dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all ml-2"
+          >
+             {isMinimized ? <Maximize2 size={18} /> : <Menu size={20} />}
+          </button>
+        </div>
 
-          {/* User card (Mobile/Desktop Expanded only) */}
-          <div className={`py-4 px-2 lg:p-2 shrink-0 transition-opacity duration-300 ${isMinimized ? "lg:hidden" : ""}`}>
-            <div className="card !p-4 lg:!p-3 border border-white/60 dark:border-white/5 bg-white/40 dark:bg-white/5 shadow-inner rounded-2xl">
-              <p className="font-semibold text-sm truncate text-text-primary dark:text-text-primary-dark">{user?.name}</p>
-              <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
-                {user?.branch} • Year {user?.year}
-              </p>
-              <div className="flex items-center gap-3 mt-2">
-                <div className="flex items-center gap-1 text-amber-500 lg:text-amber-500 text-sm font-bold">
-                  <Star size={14} /> {displayPoints} pts
+        {/* User Stats Card */}
+        <div className={`px-4 sm:px-6 shrink-0 transition-all duration-300 ${isMinimized ? "lg:opacity-0 lg:h-0 lg:overflow-hidden lg:m-0" : "mb-6"}`}>
+          <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+            <p className="font-bold text-sm text-text-primary dark:text-white truncate">{user?.name}</p>
+            <p className="text-xs text-text-secondary dark:text-gray-400 mt-0.5">{user?.branch} • Year {user?.year}</p>
+            <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-1.5 text-amber-500 font-black text-sm">
+                <Star size={16} /> {displayPoints} pts
+              </div>
+              {displayStreak > 0 && (
+                <div className="flex items-center gap-1.5 text-rose-500 font-black text-sm">
+                  <Flame size={16} /> {displayStreak} d
                 </div>
-                {displayStreak > 0 && (
-                  <div className="flex items-center gap-1 text-red-500 lg:text-red-500 text-sm font-bold">
-                    <Flame size={14} /> {displayStreak} d
-                  </div>
-                )}
-              </div>
+              )}
             </div>
-          </div>
-
-          {/* Nav links */}
-          <nav className="flex-1 px-1 lg:px-0 py-2 overflow-y-auto space-y-1 custom-scrollbar">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-4 lg:px-3 py-3 rounded-2xl lg:rounded-[1.25rem] transition-all duration-300 group
-                    ${isActive ? glassItemActive : glassItemInactive}
-                    ${isActive ? "" : "bg-transparent"}
-                    ${isMinimized ? "lg:justify-center lg:px-0" : ""}
-                  `}
-                  title={isMinimized ? item.label : undefined}
-                >
-                  <Icon size={isMinimized ? 22 : 20} className={`shrink-0 transition-all ${isActive ? "scale-110 drop-shadow-sm" : "group-hover:scale-110"}`} />
-                  <span className={`font-medium whitespace-nowrap transition-opacity duration-300 ${isMinimized ? "lg:hidden" : ""}`}>
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            })}
-
-            {user?.role === "moderator" && (
-              <>
-                <div className={`border-t border-border dark:border-border-dark lg:border-white/10 my-3 transition-opacity ${isMinimized ? "lg:mx-2" : "lg:mx-0"}`} />
-                <Link
-                  href="/moderator"
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-4 lg:px-3 py-3 rounded-2xl lg:rounded-[1.25rem] transition-all duration-300 group
-                    ${pathname === "/moderator" 
-                      ? "bg-amber-100/50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 shadow-sm border border-amber-200 dark:border-amber-500/20" 
-                      : "text-text-secondary lg:text-amber-600/70 dark:text-amber-500/70 hover:bg-white/40 dark:hover:bg-white/5 border border-transparent"}
-                    ${isMinimized ? "lg:justify-center lg:px-0" : ""}
-                  `}
-                  title={isMinimized ? "Moderator Panel" : undefined}
-                >
-                  <Shield size={isMinimized ? 22 : 20} className={`shrink-0 transition-transform group-hover:scale-110 ${pathname === "/moderator" ? "scale-110 drop-shadow-sm" : ""}`} />
-                  <span className={`font-medium whitespace-nowrap transition-opacity duration-300 ${isMinimized ? "lg:hidden" : ""}`}>Moderator Panel</span>
-                </Link>
-              </>
-            )}
-          </nav>
-
-          {/* Bottom */}
-          <div className="p-2 lg:p-0 border-t border-border dark:border-border-dark lg:border-white/20 shrink-0">
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className={`flex items-center gap-3 px-4 lg:px-3 py-3 mt-1 w-full rounded-2xl lg:rounded-[1.25rem] transition-colors
-                text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 border border-transparent hover:border-red-100 dark:hover:border-red-500/20
-                ${isMinimized ? "lg:justify-center lg:px-0" : ""}
-              `}
-              title={isMinimized ? "Sign Out" : undefined}
-            >
-              <LogOut size={isMinimized ? 22 : 20} className="shrink-0" />
-              <span className={`font-medium whitespace-nowrap transition-opacity duration-300 ${isMinimized ? "lg:hidden" : ""}`}>Sign Out</span>
-            </button>
           </div>
         </div>
+
+        {/* Main Navigation */}
+        <nav className="flex-1 px-4 lg:px-4 py-2 space-y-2.5 pb-24 lg:pb-6 relative z-10 overflow-y-auto custom-scrollbar">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group
+                  ${isActive 
+                    ? "bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]" 
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"}
+                  ${isMinimized ? "lg:justify-center lg:px-0" : ""}
+                `}
+                title={isMinimized ? item.label : undefined}
+              >
+                <Icon size={22} className={`shrink-0 ${isActive ? "text-white" : "group-hover:scale-110 transition-transform text-slate-500 dark:text-slate-400"}`} />
+                <span className={`font-semibold text-[15px] whitespace-nowrap transition-all duration-300 ${isMinimized ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : ""}`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+
+          {user?.role === "moderator" && (
+            <>
+              <div className="h-px bg-slate-200 dark:bg-white/10 my-4 lg:mx-2" />
+              <Link
+                href="/moderator"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group
+                  ${pathname === "/moderator" 
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-bold shadow-sm border border-amber-200 dark:border-amber-700" 
+                    : "text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 border border-transparent"}
+                  ${isMinimized ? "lg:justify-center lg:px-0" : ""}
+                `}
+                title={isMinimized ? "Moderator Panel" : undefined}
+              >
+                <Shield size={22} className={`shrink-0 transition-transform ${pathname === "/moderator" ? "" : "group-hover:scale-110"}`} />
+                <span className={`font-semibold text-[15px] whitespace-nowrap transition-all duration-300 ${isMinimized ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : ""}`}>
+                  Moderator Panel
+                </span>
+              </Link>
+            </>
+          )}
+
+          <div className="h-px bg-slate-200 dark:bg-white/10 my-4 lg:mx-2" />
+          
+          <button
+            onClick={() => { setSettingsOpen(true); setMobileOpen(false); }}
+            className={`flex items-center gap-4 px-4 py-3.5 w-full text-left rounded-xl transition-all duration-200 group
+              text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 
+              ${isMinimized ? "lg:justify-center lg:px-0" : ""}
+            `}
+            title={isMinimized ? "Settings" : undefined}
+          >
+            <Settings size={22} className="shrink-0 transition-transform group-hover:rotate-90 text-slate-500 dark:text-slate-400" />
+            <span className={`font-semibold text-[15px] whitespace-nowrap transition-all duration-300 ${isMinimized ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : ""}`}>
+              Settings
+            </span>
+          </button>
+        </nav>
       </aside>
 
       {/* Mobile bottom nav (3D Glassy floating pill) */}
@@ -247,6 +243,9 @@ export default function Sidebar() {
           </div>
         </div>
       </nav>
+
+      {/* Settings Modal */}
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );
 }

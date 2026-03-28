@@ -14,6 +14,13 @@ export interface IUser extends Document {
   roadmapCap: number;
   isPremium: boolean;
   lastSprintStart: Date | null;
+  ieeeMembershipCard: string;
+  ieeeVerified: boolean;
+  ieeeVerifiedAt: Date | null;
+  githubUsername: string;
+  githubConnected: boolean;
+  githubAccessToken: string;
+  githubPoints: number;
   createdAt: Date;
 }
 
@@ -32,6 +39,13 @@ const UserSchema = new Schema<IUser>(
     roadmapCap: { type: Number, default: 3 },
     isPremium: { type: Boolean, default: false },
     lastSprintStart: { type: Date, default: null },
+    ieeeMembershipCard: { type: String, default: "" },
+    ieeeVerified: { type: Boolean, default: false },
+    ieeeVerifiedAt: { type: Date, default: null },
+    githubUsername: { type: String, default: "" },
+    githubConnected: { type: Boolean, default: false },
+    githubAccessToken: { type: String, default: "" },
+    githubPoints: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

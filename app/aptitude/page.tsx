@@ -242,7 +242,7 @@ export default function AptitudePage() {
                 <Layers size={14} /> My KTU Branch
               </button>
               <button
-                onClick={() => setIsHighIQ(true)}
+                onClick={() => { setIsHighIQ(true); setMode("browse"); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 ${isHighIQ ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm" : "text-text-secondary"}`}
               >
                 <Zap size={14} /> High IQ General
@@ -251,7 +251,8 @@ export default function AptitudePage() {
           </div>
 
           {/* Navigation Bars */}
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar snap-x">
+          {!isHighIQ && (
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar snap-x">
             {[
               { key: "coding" as Tab, label: "Coding", e: "💻" },
               { key: "numerical" as Tab, label: "Numericals", e: "🔢" },
@@ -265,14 +266,16 @@ export default function AptitudePage() {
                 {t.e} {t.label}
               </button>
             ))}
-          </div>
+            </div>
+          )}
 
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8"
-          >
+          {!isHighIQ && (
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8"
+            >
             {[
               { key: "qotd" as Mode, label: "Daily Challenge", icon: Zap, c: "bg-amber-400 text-white" },
               { key: "sprint" as Mode, label: "5-min Sprint", icon: Clock, c: "bg-primary/10 text-primary" },
@@ -299,6 +302,7 @@ export default function AptitudePage() {
               );
             })}
           </motion.div>
+          )}
 
           {/* Sprint HUD */}
           {mode === "sprint" && sprintActive && questions.length > 0 && (

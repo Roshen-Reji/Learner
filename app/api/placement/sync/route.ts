@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 
 // Expanded to allow inclusive global/remote and India-wide roles
 const LOCATION_KEYWORDS = ["kerala", "kochi", "trivandrum", "technopark", "infopark", "ernakulam", "thiruvananthapuram", "calicut", "remote", "worldwide", "anywhere", "india", "global"];
-const ROLE_KEYWORDS = ["fresher", "b.tech", "entry level", "associate", "graduate", "junior", "trainee", "intern", "internship", "apprentice"];
-const EXCLUSION_KEYWORDS = ["senior", "manager", "director", "lead", "staff", "5+ years", "4+ years", "3+ years", "experienced", "principal"];
+const ROLE_KEYWORDS = ["fresher", "b.tech", "entry level", "associate", "graduate", "junior", "trainee", "intern", "internship", "apprentice", "entry-level", "new grad", "campus", "software engineer", "developer", "analyst", "sde"];
+const EXCLUSION_KEYWORDS = ["senior", "manager", "director", "lead", "staff", "5+ years", "4+ years", "principal"];
 
 const MOCK_JOBS_FALLBACK = [
   {
@@ -39,7 +39,21 @@ const MOCK_JOBS_FALLBACK = [
     location: "Trivandrum",
     description: "6 month internship leading to full time. Fresher B.Tech CSE/IT.",
     link: "https://nissan.com/careers",
-  }
+  },
+  {
+    company: "Infosys",
+    title: "Systems Engineer",
+    location: "India",
+    description: "Fresh B.Tech graduates eligible. Campus hiring for engineering students across India.",
+    link: "https://www.infosys.com/careers.html",
+  },
+  {
+    company: "Wipro",
+    title: "Project Engineer",
+    location: "India",
+    description: "Campus hiring for B.Tech CSE/IT/ECE graduates. Training provided.",
+    link: "https://careers.wipro.com/",
+  },
 ];
 
 export async function POST() {
@@ -101,12 +115,11 @@ export async function POST() {
 
     if (EXCLUSION_KEYWORDS.some(kw => combinedText.includes(kw))) continue;
 
-    // Must map to an acceptable location (India / Kerala / Remote / Global)
+    // Accept if matches a relevant location OR an entry-level role keyword (relaxed)
     const matchesLocation = LOCATION_KEYWORDS.some(kw => combinedText.includes(kw));
-    // Must map to an acceptable entry level title (Intern / Fresher / Junior)
     const matchesRole = ROLE_KEYWORDS.some(kw => combinedText.includes(kw));
 
-    if (!matchesLocation || !matchesRole) continue;
+    if (!matchesLocation && !matchesRole) continue;
 
     const exists = await Placement.findOne({ company: job.company, role: job.title });
     if (exists) continue;

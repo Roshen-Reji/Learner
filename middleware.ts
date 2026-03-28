@@ -17,5 +17,6 @@ export const config = {
     "/moderator/:path*",
     "/leaderboard/:path*",
     "/ai-chat/:path*",
+    "/github/:path*",
   ],
 };

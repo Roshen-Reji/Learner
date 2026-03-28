@@ -246,7 +246,7 @@ export async function POST(req: NextRequest) {
       approved: true, // Moderators directly publish manual pushes
       aiGenerated: false,
       isHighIQ: body.isHighIQ || false,
-      targetBranch: body.targetBranch || "General"
+      targetBranch: body.isHighIQ ? "General" : (body.targetBranch || "General"),
     });
 
     return NextResponse.json(manualQuestion);

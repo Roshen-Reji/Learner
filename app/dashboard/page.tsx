@@ -17,9 +17,20 @@ import {
   Sparkles,
   Star,
   Zap,
+  TrendingUp,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
+import toast from "react-hot-toast";
+
+interface SkillItem {
+  name: string;
+  confidence: number;
+  reasoning: string;
+  icon: string;
+}
 
 const quickLinks = [
   {
@@ -70,12 +81,35 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const user = session?.user as any;
   const [liveData, setLiveData] = useState<{ points: number; streakDays: number } | null>(null);
+  const [skillsData, setSkillsData] = useState<{ skills: SkillItem[]; summary: string; recommendation: string } | null>(null);
+  const [analyzingSkills, setAnalyzingSkills] = useState(false);
 
   useEffect(() => {
     if (session) {
       fetch("/api/users/me").then(r => r.json()).then(data => setLiveData(data)).catch(() => {});
     }
+    // Restore cached skills analysis
+    try {
+      const cached = sessionStorage.getItem("skillsAnalysis");
+      if (cached) setSkillsData(JSON.parse(cached));
+    } catch {}
   }, [session]);
+
+  const analyzeSkills = async () => {
+    setAnalyzingSkills(true);
+    try {
+      const res = await fetch("/api/users/skills-analysis");
+      if (res.ok) {
+        const data = await res.json();
+        setSkillsData(data);
+        sessionStorage.setItem("skillsAnalysis", JSON.stringify(data));
+        toast.success("Skills analysis complete! 🎯");
+      }
+    } catch {
+      toast.error("Analysis failed");
+    }
+    setAnalyzingSkills(false);
+  };
 
   const displayPoints = liveData?.points ?? user?.points ?? 0;
   const displayStreak = liveData?.streakDays ?? user?.streakDays ?? 0;
@@ -146,6 +180,92 @@ export default function DashboardPage() {
                 <p className="text-sm text-text-secondary mt-1">— Steve Jobs</p>
               </div>
             </div>
+          </div>
+
+          {/* AI Skills Analysis */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
+              <TrendingUp className="text-primary" size={22} />
+              AI Skills Analysis
+            </h2>
+
+            {!skillsData ? (
+              <div className="card text-center py-10">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-4">
+                  <Brain className="text-primary" size={32} />
+                </div>
+                <h3 className="font-bold text-lg text-text-primary mb-2">Discover Your Strengths</h3>
+                <p className="text-sm text-text-secondary max-w-md mx-auto mb-6">
+                  Our AI analyzes your completed roadmap nodes and aptitude performance to identify your top skills and career potential.
+                </p>
+                <button
+                  onClick={analyzeSkills}
+                  disabled={analyzingSkills}
+                  className="btn-primary flex items-center gap-2 mx-auto"
+                >
+                  {analyzingSkills ? (
+                    <><Loader2 size={18} className="animate-spin" /> Analyzing...</>
+                  ) : (
+                    <><Sparkles size={18} /> Analyze My Skills</>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Skills Grid */}
+                {skillsData.skills && skillsData.skills.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {skillsData.skills.map((skill, i) => (
+                      <div key={i} className="card !p-4 group hover:scale-[1.02] transition-all">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-2xl">{skill.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-sm text-text-primary truncate">{skill.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                                <div
+                                  className="bg-gradient-to-r from-primary to-secondary h-1.5 rounded-full transition-all"
+                                  style={{ width: `${skill.confidence}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-bold text-primary">{skill.confidence}%</span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-text-secondary leading-relaxed">{skill.reasoning}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Summary */}
+                {skillsData.summary && (
+                  <div className="card border-l-4 border-l-primary !rounded-l-sm">
+                    <div className="flex items-start gap-3">
+                      <Sparkles className="text-primary shrink-0 mt-0.5" size={18} />
+                      <div>
+                        <p className="text-sm text-text-primary leading-relaxed">{skillsData.summary}</p>
+                        {skillsData.recommendation && (
+                          <p className="text-sm font-semibold text-primary mt-2">
+                            💡 {skillsData.recommendation}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Re-analyze button */}
+                <button
+                  onClick={analyzeSkills}
+                  disabled={analyzingSkills}
+                  className="text-sm text-primary font-semibold flex items-center gap-2 hover:underline mx-auto"
+                >
+                  {analyzingSkills ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                  Re-analyze
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Quick actions */}
