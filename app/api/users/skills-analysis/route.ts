@@ -65,19 +65,19 @@ export async function GET() {
 
     const userDoc = await User.findById(userId).select("branch year").lean() as any;
 
-    const prompt = `You are a strict, highly analytical career skills evaluator. Your task is to calculate the student's actual skill proficiency strictly based on the provided empirical data. Do NOT extrapolate or hallucinate high proficiency for minimal work.
+    const prompt = `You are an elite, highly analytical AI Career Counselor and Skills Evaluator. Your goal is to deeply analyze the student's algorithmic progress and generate a highly accurate, complex skill matrix and career projection.
 
 CRITICAL ALGORITHM RULES:
-1. 1 completed node in a roadmap = maximum 2% to 5% proficiency in that skill. (e.g., if they completed 1 node in "n8n", their confidence must be ~5%, NEVER 75%).
-2. Require significant volume (e.g., 20+ nodes or 50+ questions) to grant any skill a confidence score above 40%.
-3. If they have very little data, their highest skill confidence should accurately reflect absolute beginner status (e.g., 5% to 15%).
-4. Be brutally honest in the reasoning. Explain exactly how many nodes/questions led to this percentage.
+1. 1 completed node in a roadmap = maximum 2% to 5% proficiency. Require significant volume (20+ nodes or 50+ questions) to grant any skill confidence above 40%.
+2. IGNORE and OMIT any random skills or roadmaps where the user has completed fewer than 3 nodes OR answered 0 questions. Only output their most highly progressed, actual core skills. Do not clutter the analysis with 0% or initial-exposure noise.
+3. Determine their absolute BEST FIT JOBS based specifically on the crossover of their highest confident skills.
+4. Be brutally honest in reasoning. Explain exactly the mathematical volume of nodes/questions that led to their ranking.
 
 Student Info:
 - Branch: ${userDoc?.branch || "Unknown"}
 - Year: ${userDoc?.year || "Unknown"}
 
-Completed Roadmap Nodes:
+Completed Roadmap Nodes (Only assessing highly active paths):
 ${completedRoadmapData.length > 0 ? completedRoadmapData.join("\n") : "No roadmap nodes completed yet"}
 
 Aptitude Performance (correctly answered questions):
@@ -91,13 +91,14 @@ Return ONLY valid JSON exactly matching this structure:
   "skills": [
     {
       "name": "Skill Name",
-      "confidence": 8,
-      "reasoning": "You have completed exactly 1 node and 0 questions in this field, demonstrating initial exposure but requiring significant practice.",
+      "confidence": 45,
+      "reasoning": "You have completed 12 nodes in this field, demonstrating solid intermediate exposure.",
       "icon": "⚡"
     }
   ],
-  "summary": "An objective, mathematically strict summary of their progress volume.",
-  "recommendation": "Direct advice on achieving higher mastery."
+  "bestFitJobs": ["Frontend Developer", "Cloud Engineer"],
+  "summary": "A complex, wonderful, and highly analytical summary of their true technical trajectory and cross-disciplinary overlaps.",
+  "recommendation": "Strategic, actionable advice on which exact technologies to learn next to secure their best fit jobs."
 }`;
 
     try {

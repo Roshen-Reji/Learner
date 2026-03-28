@@ -2,7 +2,6 @@
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import Sidebar from "@/components/layout/Sidebar";
 import {
   Brain,
   Trophy,
@@ -81,8 +80,9 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const user = session?.user as any;
   const [liveData, setLiveData] = useState<{ points: number; streakDays: number } | null>(null);
-  const [skillsData, setSkillsData] = useState<{ skills: SkillItem[]; summary: string; recommendation: string } | null>(null);
+  const [skillsData, setSkillsData] = useState<{ skills: SkillItem[]; summary: string; recommendation: string; bestFitJobs?: string[] } | null>(null);
   const [analyzingSkills, setAnalyzingSkills] = useState(false);
+  const [skillsExpanded, setSkillsExpanded] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -128,7 +128,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-surface-light">
-      <Sidebar />
       <main className="lg:ml-72 pt-16 lg:pt-0 pb-24 lg:pb-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-10">
           {/* Hero greeting */}
@@ -214,27 +213,50 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {/* Skills Grid */}
                 {skillsData.skills && skillsData.skills.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {skillsData.skills.map((skill, i) => (
-                      <div key={i} className="card !p-4 group hover:scale-[1.02] transition-all">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-2xl">{skill.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-sm text-text-primary truncate">{skill.name}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                                <div
-                                  className="bg-gradient-to-r from-primary to-secondary h-1.5 rounded-full transition-all"
-                                  style={{ width: `${skill.confidence}%` }}
-                                />
+                  <div className="mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {(skillsExpanded ? skillsData.skills : skillsData.skills.slice(0, 3)).map((skill, i) => (
+                        <div key={i} className="card !p-4 group hover:scale-[1.02] transition-all relative overflow-hidden">
+                          <div className="flex items-center gap-3 mb-2 relative z-10">
+                            <span className="text-2xl">{skill.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-sm text-text-primary truncate">{skill.name}</h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <div className="flex-1 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-primary to-secondary h-1.5 rounded-full transition-all"
+                                    style={{ width: `${skill.confidence}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs font-bold text-primary">{skill.confidence}%</span>
                               </div>
-                              <span className="text-xs font-bold text-primary">{skill.confidence}%</span>
                             </div>
                           </div>
+                          <p className="text-xs text-text-secondary leading-relaxed relative z-10">{skill.reasoning}</p>
                         </div>
-                        <p className="text-xs text-text-secondary leading-relaxed">{skill.reasoning}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    {skillsData.skills.length > 3 && (
+                      <button onClick={() => setSkillsExpanded(!skillsExpanded)} className="text-primary text-sm font-bold flex items-center justify-center gap-1 mx-auto mt-4 hover:bg-primary/5 px-4 py-2 rounded-full transition-colors border border-primary/20">
+                        {skillsExpanded ? "Collapse View" : `View All ${skillsData.skills.length} Core Skills`}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Best Fit Jobs */}
+                {skillsData.bestFitJobs && skillsData.bestFitJobs.length > 0 && (
+                  <div className="card !p-4 border-l-4 border-l-amber-500 !rounded-l-sm bg-amber-50/50 dark:bg-amber-900/10 mb-4">
+                    <h4 className="text-xs font-bold text-amber-700 dark:text-amber-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <Briefcase size={14} /> Recommended Career Pathways
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {skillsData.bestFitJobs.map((job, idx) => (
+                        <span key={idx} className="bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-400 px-3 py-1.5 rounded-lg text-sm font-bold border border-amber-200 dark:border-amber-800 shadow-sm flex items-center gap-1.5 hover:-translate-y-0.5 transition-transform">
+                          <Target size={14} className="text-amber-500 opacity-70" /> {job}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
 

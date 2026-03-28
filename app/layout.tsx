@@ -3,6 +3,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import PWAProvider from "@/components/PWAProvider";
 import SmoothScroll from "@/components/SmoothScroll";
+import ClientLayout from "@/components/layout/ClientLayout";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -33,7 +34,7 @@ export default async function RootLayout({
         <Providers session={session}>
           <SmoothScroll>
             <PWAProvider />
-            {children}
+            <ClientLayout>{children}</ClientLayout>
           </SmoothScroll>
         </Providers>
       </body>
