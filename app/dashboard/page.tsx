@@ -19,6 +19,9 @@ import {
   TrendingUp,
   RefreshCw,
   Loader2,
+  ChevronDown,
+  ChevronUp,
+  Rocket
 } from "lucide-react";
 import Link from "next/link";
 import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
@@ -27,7 +30,9 @@ import toast from "react-hot-toast";
 interface SkillItem {
   name: string;
   confidence: number;
-  reasoning: string;
+  currentStanding?: string;
+  futureLeading?: string;
+  reasoning?: string;
   icon: string;
 }
 
@@ -83,15 +88,30 @@ export default function DashboardPage() {
   const [skillsData, setSkillsData] = useState<{ skills: SkillItem[]; summary: string; recommendation: string; bestFitJobs?: string[] } | null>(null);
   const [analyzingSkills, setAnalyzingSkills] = useState(false);
   const [skillsExpanded, setSkillsExpanded] = useState(false);
+  const [expandedSkillCards, setExpandedSkillCards] = useState<number[]>([]);
+
+  const toggleSkillCard = (idx: number) => {
+    setExpandedSkillCards(prev => 
+      prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+    );
+  };
 
   useEffect(() => {
     if (session) {
       fetch("/api/users/me").then(r => r.json()).then(data => setLiveData(data)).catch(() => {});
     }
-    // Restore cached skills analysis
+    // Restore cached skills analysis but discard legacy strict structures
     try {
       const cached = sessionStorage.getItem("skillsAnalysis");
-      if (cached) setSkillsData(JSON.parse(cached));
+      if (cached) {
+        const parsedData = JSON.parse(cached);
+        // Check if the cache contains the new intuitive data fields. If not, trash the cache to force a re-calc.
+        if (parsedData?.skills?.[0]?.currentStanding) {
+          setSkillsData(parsedData);
+        } else {
+          sessionStorage.removeItem("skillsAnalysis");
+        }
+      }
     } catch {}
   }, [session]);
 
@@ -215,26 +235,56 @@ export default function DashboardPage() {
                 {skillsData.skills && skillsData.skills.length > 0 && (
                   <div className="mb-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {(skillsExpanded ? skillsData.skills : skillsData.skills.slice(0, 3)).map((skill, i) => (
-                        <div key={i} className="card !p-4 group hover:scale-[1.02] transition-all relative overflow-hidden">
-                          <div className="flex items-center gap-3 mb-2 relative z-10">
-                            <span className="text-2xl">{skill.icon}</span>
+                      {(skillsExpanded ? skillsData.skills : skillsData.skills.slice(0, 3)).map((skill, i) => {
+                        const isCardExpanded = expandedSkillCards.includes(i);
+                        return (
+                        <div 
+                          key={i} 
+                          onClick={() => toggleSkillCard(i)}
+                          className={`card !p-4 group hover:scale-[1.02] cursor-pointer transition-all relative overflow-hidden ${isCardExpanded ? 'ring-2 ring-primary/20 shadow-md' : 'border-border'}`}
+                        >
+                          <div className="flex items-center gap-3 relative z-10 w-full">
+                            <span className="text-2xl shrink-0">{skill.icon}</span>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-sm text-text-primary truncate">{skill.name}</h4>
                               <div className="flex items-center gap-2 mt-1">
                                 <div className="flex-1 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                                   <div
-                                    className="bg-gradient-to-r from-primary to-secondary h-1.5 rounded-full transition-all"
-                                    style={{ width: `${skill.confidence}%` }}
+                                    className="bg-gradient-to-r from-primary to-secondary h-1.5 rounded-full transition-all duration-1000"
+                                    style={{ width: `${Math.max(skill.confidence, 5)}%` }}
                                   />
                                 </div>
-                                <span className="text-xs font-bold text-primary">{skill.confidence}%</span>
+                                <span className="text-xs font-bold text-primary w-8 text-right px-1">{skill.confidence}%</span>
                               </div>
                             </div>
+                            <div className="shrink-0 text-text-secondary bg-slate-50 dark:bg-slate-800 p-1.5 rounded-full group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                              {isCardExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </div>
                           </div>
-                          <p className="text-xs text-text-secondary leading-relaxed relative z-10">{skill.reasoning}</p>
+                          
+                          {/* Expanded Content View */}
+                          {isCardExpanded && (
+                            <div className="mt-4 pt-4 border-t border-border/50 animate-in fade-in slide-in-from-top-2 duration-300 space-y-3 relative z-10 block">
+                              <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100/50 dark:border-blue-900/30">
+                                <div className="flex items-center gap-1.5 mb-1.5 text-blue-600 dark:text-blue-400">
+                                  <Target size={14} />
+                                  <span className="text-xs font-bold uppercase tracking-wide">Current Standing</span>
+                                </div>
+                                <p className="text-xs text-text-secondary leading-relaxed">{skill.currentStanding || skill.reasoning}</p>
+                              </div>
+                              
+                              <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100/50 dark:border-emerald-900/30">
+                                <div className="flex items-center gap-1.5 mb-1.5 text-emerald-600 dark:text-emerald-400">
+                                  <Rocket size={14} />
+                                  <span className="text-xs font-bold uppercase tracking-wide">Where It Leads</span>
+                                </div>
+                                <p className="text-xs text-text-secondary leading-relaxed">{skill.futureLeading || "Continue scaling this roadmap to unlock advanced industry pathways."}</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                     {skillsData.skills.length > 3 && (
                       <button onClick={() => setSkillsExpanded(!skillsExpanded)} className="text-primary text-sm font-bold flex items-center justify-center gap-1 mx-auto mt-4 hover:bg-primary/5 px-4 py-2 rounded-full transition-colors border border-primary/20">

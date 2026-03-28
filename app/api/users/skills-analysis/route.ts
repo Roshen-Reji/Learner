@@ -61,17 +61,20 @@ export async function GET() {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    });
 
     const userDoc = await User.findById(userId).select("branch year").lean() as any;
 
-    const prompt = `You are an elite, highly analytical AI Career Counselor and Skills Evaluator. Your goal is to deeply analyze the student's algorithmic progress and generate a highly accurate, complex skill matrix and career projection.
+    const prompt = `You are an intuitive, highly encouraging AI Technical Mentor. Analyze the student's algorithmic progress and generate an accurate, human-readable skill matrix and career projection.
 
 CRITICAL ALGORITHM RULES:
-1. 1 completed node in a roadmap = maximum 2% to 5% proficiency. Require significant volume (20+ nodes or 50+ questions) to grant any skill confidence above 40%.
+1. 1 completed node in a roadmap = 2% to 5% proficiency. Require significant volume (20+ nodes or 50+ questions) to grant any skill confidence above 40%.
 2. IGNORE and OMIT any random skills or roadmaps where the user has completed fewer than 3 nodes OR answered 0 questions. Only output their most highly progressed, actual core skills. Do not clutter the analysis with 0% or initial-exposure noise.
 3. Determine their absolute BEST FIT JOBS based specifically on the crossover of their highest confident skills.
-4. Be brutally honest in reasoning. Explain exactly the mathematical volume of nodes/questions that led to their ranking.
+4. For each skill, provide an intuitive, encouraging breakdown of exactly "where they currently stand" based on what they've completed, and exactly "where this leads to" in terms of career trajectories or advanced topics. Do not output raw point calculations to the user.
 
 Student Info:
 - Branch: ${userDoc?.branch || "Unknown"}
@@ -86,35 +89,27 @@ ${Object.entries(categoryBreakdown).map(([cat, count]) => `- ${cat}: ${count} co
 Total correct answers: ${correctQuestions.length}
 ${correctQuestions.length > 0 ? `Sample topics mastered: ${correctQuestions.slice(0, 5).map((q: any) => q.text?.substring(0, 30)).join(", ")}` : ""}
 
-Return ONLY valid JSON exactly matching this structure:
+Return exactly this JSON structure and nothing else:
 {
   "skills": [
     {
-      "name": "Skill Name",
-      "confidence": 45,
-      "reasoning": "You have completed 12 nodes in this field, demonstrating solid intermediate exposure.",
-      "icon": "⚡"
+      "name": "Java Programming",
+      "confidence": 15,
+      "currentStanding": "You have built a solid foundation mastering Variables, Control Flow, and OOP paradigms.",
+      "futureLeading": "This naturally leads towards advanced Spring Boot backend development and lucrative Enterprise Software Engineering roles.",
+      "icon": "☕"
     }
   ],
-  "bestFitJobs": ["Frontend Developer", "Cloud Engineer"],
-  "summary": "A complex, wonderful, and highly analytical summary of their true technical trajectory and cross-disciplinary overlaps.",
+  "bestFitJobs": ["Java Backend Developer", "Cloud Engineer"],
+  "summary": "An intuitive, wonderfully encouraging summary of their technical trajectory.",
   "recommendation": "Strategic, actionable advice on which exact technologies to learn next to secure their best fit jobs."
 }`;
 
     try {
       const result = await model.generateContent(prompt);
-      let text = result.response.text().trim();
-
-      // Strip markdown code blocks if present
-      if (text.startsWith("```json")) text = text.replace(/^```json/, "");
-      if (text.startsWith("```")) text = text.replace(/^```/, "");
-      if (text.endsWith("```")) text = text.replace(/```$/, "");
-
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const analysis = JSON.parse(jsonMatch[0]);
-        return NextResponse.json(analysis);
-      }
+      const text = result.response.text().trim();
+      const analysis = JSON.parse(text);
+      return NextResponse.json(analysis);
     } catch (aiError: any) {
       console.error("Skills analysis AI error:", aiError?.message);
     }
