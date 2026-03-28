@@ -75,6 +75,10 @@ export default function GitHubPage() {
   const [data, setData] = useState<GitHubData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Community Share Modal State
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareDraft, setShareDraft] = useState({ title: "", body: "", tags: "" });
+
   useEffect(() => {
     if (searchParams.get("connected") === "true") {
       toast.success("GitHub connected successfully! 🎉");
@@ -99,19 +103,33 @@ export default function GitHubPage() {
     setLoading(false);
   };
 
-  const shareToForum = async (repo: Repo) => {
+  const openShareModal = (repo: Repo) => {
+    setShareDraft({
+      title: `Overview: ${repo.name}`,
+      body: `**Describe what this project is...**\n\n${repo.description || ""}\n\n---\n\n🔹 **Language:** ${repo.language || "N/A"}\n⭐ **Stars:** ${repo.stars} | 🍴 **Forks:** ${repo.forks}\n\n🔗 [**View Repository on GitHub**](${repo.url})`,
+      tags: "github, project, showcase",
+    });
+    setShowShareModal(true);
+  };
+
+  const submitShare = async () => {
+    if (!shareDraft.title.trim() || !shareDraft.body.trim()) {
+      return toast.error("Title and description are required.");
+    }
     try {
       const res = await fetch("/api/community", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: `Project Showcase: ${repo.name}`,
-          body: `${repo.description || "No description provided."}\n\n💻 **Language:** ${repo.language || "N/A"} | ⭐ **Stars:** ${repo.stars}\n\n🔗 **Repository URL:** ${repo.url}`,
-          tags: "github,project,showcase",
+          title: shareDraft.title,
+          body: shareDraft.body,
+          tags: shareDraft.tags,
         }),
       });
-      if (res.ok) toast.success("Shared to community! 🎉");
-      else toast.error("Failed to share");
+      if (res.ok) {
+        toast.success("Shared to community! 🎉");
+        setShowShareModal(false);
+      } else toast.error("Failed to share");
     } catch {
       toast.error("Failed to share");
     }
@@ -248,7 +266,7 @@ export default function GitHubPage() {
                           </h4>
                           <div className="flex gap-1 shrink-0 ml-2">
                             <button
-                              onClick={() => shareToForum(repo)}
+                              onClick={() => openShareModal(repo)}
                               className="p-1.5 hover:bg-primary/10 rounded-lg text-text-secondary hover:text-primary transition"
                               title="Share to community"
                             >
@@ -294,6 +312,62 @@ export default function GitHubPage() {
           )}
         </div>
       </main>
+
+      {/* Share to Community Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative border border-gray-200 dark:border-white/10">
+            <h2 className="text-2xl font-black text-text-primary mb-5 flex items-center gap-2">
+              <Share2 className="text-primary" size={24} /> Share Project
+            </h2>
+            <div className="space-y-4 text-left">
+              <div>
+                <label className="text-sm font-bold text-text-secondary block mb-1.5">Project Title</label>
+                <input 
+                  type="text"
+                  className="input-field w-full font-semibold" 
+                  value={shareDraft.title} 
+                  onChange={e => setShareDraft({...shareDraft, title: e.target.value})} 
+                  placeholder="What did you build?"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-bold text-text-secondary block mb-1.5">Description (Markdown Supported)</label>
+                <textarea 
+                  className="input-field w-full h-40 resize-none font-mono text-sm leading-relaxed" 
+                  value={shareDraft.body} 
+                  onChange={e => setShareDraft({...shareDraft, body: e.target.value})} 
+                  placeholder="Describe your repository..."
+                />
+              </div>
+              <div>
+                <label className="text-sm font-bold text-text-secondary block mb-1.5">Tags (comma separated)</label>
+                <input 
+                  type="text"
+                  className="input-field w-full" 
+                  value={shareDraft.tags} 
+                  onChange={e => setShareDraft({...shareDraft, tags: e.target.value})} 
+                  placeholder="react, web3, typescript..."
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-8">
+              <button 
+                onClick={() => setShowShareModal(false)} 
+                className="px-5 py-2.5 rounded-xl font-bold text-text-secondary hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitShare} 
+                className="btn-primary flex items-center gap-2"
+              >
+                Post to Community <ExternalLink size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

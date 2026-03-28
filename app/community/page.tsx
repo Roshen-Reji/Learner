@@ -18,6 +18,7 @@ import {
   Bell,
   Pin,
   Image,
+  ExternalLink,
 } from "lucide-react";
 import HeartbeatLoader from "@/components/ui/HeartbeatLoader";
 
@@ -256,6 +257,58 @@ export default function CommunityPage() {
     return `${Math.floor(d / 86400)}d ago`;
   };
 
+  const renderBold = (text: string) => {
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-bold text-text-primary">{part.slice(2, -2)}</strong>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
+  const renderBody = (text: string) => {
+    // Regex matches [Link Text](https://link.url) OR raw https:// URLs
+    const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s]+)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = linkRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      
+      const isMarkdown = match[1] !== undefined;
+      const url = isMarkdown ? match[2] : match[3];
+      const linkText = isMarkdown ? match[1].replace(/\*/g, '') : "View Project Link";
+
+      parts.push(
+        <a
+          key={`link-${lastIndex}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-2 mt-1 bg-slate-900 border border-slate-700 text-white rounded-lg font-bold text-sm shadow-md hover:scale-[1.02] transition-transform w-[fit-content] break-normal"
+        >
+          <ExternalLink size={14} /> {linkText}
+        </a>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+    
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return (
+      <span className="whitespace-pre-wrap inline-block w-full text-[15px]">
+        {parts.map((part, i) => typeof part !== "string" ? part : <span key={i}>{renderBold(part)}</span>)}
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-surface-light">
       <Sidebar />
@@ -321,7 +374,9 @@ export default function CommunityPage() {
                     )}
                   </div>
 
-                  <p className="mt-3 text-text-primary leading-relaxed">{post.body}</p>
+                  <div className="mt-3 text-text-primary leading-relaxed break-words overflow-hidden">
+                    {renderBody(post.body)}
+                  </div>
 
                   {post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-3">
@@ -362,7 +417,9 @@ export default function CommunityPage() {
                             <span className="font-medium text-primary">{reply.authorName}</span>
                             <span className="text-text-secondary">{timeAgo(reply.createdAt)}</span>
                           </div>
-                          <p className="text-sm mt-1">{reply.body}</p>
+                          <div className="text-sm mt-1 leading-relaxed break-words overflow-hidden">
+                            {renderBody(reply.body)}
+                          </div>
                         </div>
                       ))}
 

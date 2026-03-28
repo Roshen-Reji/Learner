@@ -76,6 +76,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     { name: "", credits: "", grade: "O" },
   ]);
   const [sgpaResult, setSgpaResult] = useState<number | null>(null);
+  const [sgpaSemester, setSgpaSemester] = useState<number>(1);
 
   // CGPA Calculator
   const [calcMode, setCalcMode] = useState<"sgpa" | "cgpa">("sgpa");
@@ -88,7 +89,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   // IEEE Membership
   const [ieeeCardUrl, setIeeeCardUrl] = useState("");
   const [verifying, setVerifying] = useState(false);
-  const [ieeeStatus, setIeeeStatus] = useState<"none" | "verified" | "failed">("none");
+  const [ieeeStatus, setIeeeStatus] = useState<"none" | "pending" | "verified" | "failed">("none");
 
   // GitHub
   const [githubData, setGithubData] = useState<{ connected: boolean; username?: string; points?: number } | null>(null);
@@ -98,6 +99,16 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   useEffect(() => {
     if (isOpen && activeTab === "github" && !githubData) {
       fetchGithubStatus();
+    }
+  }, [isOpen, activeTab]);
+
+  // Fetch IEEE state actively on tab focus
+  useEffect(() => {
+    if (isOpen && activeTab === "ieee") {
+      fetch("/api/users/me").then(r => r.json()).then(data => {
+        if (data.ieeeCardUrl && !ieeeCardUrl) setIeeeCardUrl(data.ieeeCardUrl);
+        if (data.ieeeStatus && ieeeStatus === "none") setIeeeStatus(data.ieeeStatus);
+      }).catch(() => {});
     }
   }, [isOpen, activeTab]);
 
@@ -139,7 +150,21 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
 
     const sgpa = totalWeightedPoints / totalCredits;
-    setSgpaResult(Math.round(sgpa * 100) / 100);
+    const finalSgpa = Math.round(sgpa * 100) / 100;
+    setSgpaResult(finalSgpa);
+
+    // Auto-sync mapped targets directly to CGPA arrays
+    const existingIndex = semesters.findIndex(s => s.id === sgpaSemester);
+    if (existingIndex !== -1) {
+      const upd = [...semesters];
+      upd[existingIndex] = { id: sgpaSemester, sgpa: finalSgpa.toString(), totalCredits: totalCredits.toString() };
+      setSemesters(upd);
+    } else {
+      const newSems = [...semesters, { id: sgpaSemester, sgpa: finalSgpa.toString(), totalCredits: totalCredits.toString() }];
+      newSems.sort((a, b) => a.id - b.id);
+      setSemesters(newSems);
+    }
+    toast.success(`SGPA mapped directly to S${sgpaSemester} in CGPA calculator!`, { icon: '🎓' });
   };
 
   // ──── CGPA CALCULATION ────
@@ -214,14 +239,15 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       const data = await res.json();
       if (res.ok && data.verified) {
         setIeeeStatus("verified");
-        toast.success("IEEE Membership Verified! +50 points 🎉");
+        toast.success("Already Verified!");
+      } else if (res.ok) {
+        setIeeeStatus("pending");
+        toast.success("Card submitted for manual moderator review! ⏱️");
       } else {
-        setIeeeStatus("failed");
-        toast.error(data.reason || "Could not verify membership card");
+        toast.error(data.reason || "Submission error");
       }
     } catch {
-      toast.error("Verification failed");
-      setIeeeStatus("failed");
+      toast.error("Failed to connect to verification core");
     }
     setVerifying(false);
   };
@@ -328,6 +354,30 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <Info size={14} className="text-blue-500 shrink-0" />
                     <span>KTU Grade Points: O(10), A+(9), A(8.5), B+(8), B(7.5), C(7), P(6), F/FE/Ab(0)</span>
                   </div>
+                  
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-white dark:bg-slate-800 p-3 rounded-xl border border-border dark:border-white/10">
+                    <label className="text-sm font-bold text-text-primary">Target Semester:</label>
+                    <select 
+                      value={sgpaSemester} 
+                      onChange={(e) => {
+                        setSgpaSemester(Number(e.target.value));
+                        setCourses([
+                          { name: "", credits: "", grade: "O" },
+                          { name: "", credits: "", grade: "O" },
+                          { name: "", credits: "", grade: "O" },
+                          { name: "", credits: "", grade: "O" },
+                          { name: "", credits: "", grade: "O" },
+                        ]);
+                        setSgpaResult(null);
+                      }} 
+                      className="input-field !py-1.5 w-full sm:w-40 font-bold text-primary"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                        <option key={s} value={s}>Semester {s}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="space-y-2.5">
                     {courses.map((c, i) => (
                       <div key={i} className="flex gap-2 items-center">
@@ -405,17 +455,28 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <p className="text-sm text-blue-700 dark:text-blue-500">Upload your IEEE membership card to earn bonus points. Our AI will verify its authenticity.</p>
               </div>
               {ieeeStatus === "verified" ? (
-                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-300 dark:border-emerald-700 rounded-2xl p-6 text-center">
-                  <div className="w-16 h-16 mx-auto bg-emerald-100 dark:bg-emerald-800 rounded-full flex items-center justify-center mb-3"><Sparkles className="text-emerald-600 dark:text-emerald-400" size={32} /></div>
-                  <p className="font-bold text-emerald-700 dark:text-emerald-400 text-lg">Verified IEEE Member ✓</p>
-                  <p className="text-sm text-emerald-600 dark:text-emerald-500 mt-1">+50 bonus points have been credited to your account</p>
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-300 dark:border-emerald-700 rounded-2xl p-6 text-center shadow-lg relative overflow-hidden animate-fade-in">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                  
+                  {ieeeCardUrl && (
+                    <div className="mb-5 relative z-10 mx-auto max-w-[200px] rounded-xl overflow-hidden border-4 border-white dark:border-slate-800 shadow-md transform -rotate-2 hover:rotate-0 transition-all duration-300">
+                      <img src={ieeeCardUrl} alt="Verified IEEE Card" className="w-full h-auto object-cover" />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-left">
+                        <span className="text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-1"><CheckCircle2 size={12} className="text-emerald-400" /> Authorized</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="relative z-10 w-16 h-16 mx-auto bg-gradient-to-br from-emerald-100 to-green-200 dark:from-emerald-800 dark:to-green-900 rounded-full flex items-center justify-center mb-4 shadow-sm border border-emerald-200 dark:border-emerald-700"><Sparkles className="text-emerald-600 dark:text-emerald-400" size={32} /></div>
+                  <h3 className="font-black text-emerald-800 dark:text-emerald-300 text-xl tracking-tight mb-2 relative z-10">You are officially Verified! ✓</h3>
+                  <p className="text-sm font-medium text-emerald-700 dark:text-emerald-500 max-w-[280px] sm:max-w-sm mx-auto relative z-10 leading-relaxed">Your IEEE membership card has been successfully audited and approved. You have officially earned the exclusive <b>IEEE Member</b> badge along with your new <b>Premium</b> ranking privileges!</p>
                 </div>
               ) : (
                 <>
                   <div>
                     <label className="text-sm font-semibold text-text-primary mb-2 block">Upload Card Image</label>
-                    <UploadDropzone<OurFileRouter, "notesUploader">
-                      endpoint="notesUploader"
+                    <UploadDropzone<OurFileRouter, "ieeeUploader">
+                      endpoint="ieeeUploader"
                       onClientUploadComplete={(res) => {
                         if (res && res[0]) {
                           setIeeeCardUrl(res[0].url);
@@ -434,15 +495,28 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     />
                     {ieeeCardUrl && (
                       <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-600 dark:text-emerald-400 text-sm font-medium flex items-center gap-2">
-                        <CheckCircle2 size={16} /> Image Ready for AI Verification
+                        <CheckCircle2 size={16} /> Image Document Uploaded Successfully
                       </div>
                     )}
                   </div>
-                  {ieeeStatus === "failed" && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-xl p-3 text-sm text-red-600 dark:text-red-400 font-medium">✕ Verification failed. Please ensure you uploaded a clear, valid IEEE membership card.</div>
+                  
+                  {ieeeStatus === "pending" && (
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-xl p-4 text-sm text-amber-700 dark:text-amber-400 font-bold flex items-center gap-2">
+                      <RefreshCw size={16} className="animate-spin" /> Submitted for Moderator Review
+                    </div>
                   )}
-                  <button onClick={verifyIEEECard} disabled={verifying} className="btn-primary w-full flex items-center justify-center gap-2">
-                    <Sparkles size={16} /> {verifying ? "AI is verifying..." : "Verify with AI"}
+                  {ieeeStatus === "failed" && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-xl p-3 text-sm text-red-600 dark:text-red-400 font-medium flex gap-2">
+                      <X size={16} className="shrink-0 mt-0.5" /> Verification rejected by moderator. Please upload a clear official IEEE card.
+                    </div>
+                  )}
+                  
+                  <button 
+                    onClick={verifyIEEECard} 
+                    disabled={verifying || ieeeStatus === "pending" || !ieeeCardUrl} 
+                    className="btn-primary w-full flex items-center justify-center gap-2 py-3"
+                  >
+                    <Sparkles size={18} /> {verifying ? "Submitting Request..." : ieeeStatus === "pending" ? "Awaiting Review" : "Submit for Verification"}
                   </button>
                 </>
               )}

@@ -115,12 +115,12 @@ export default function ModeratorPage() {
     setLoading(true);
     try {
       const [usersRes, questionsRes, allAptitudeRes, roadmapsRes, placementsRes, notesRes] = await Promise.all([
-        fetch("/api/users"),
-        fetch("/api/aptitude?pending=true"),
-        fetch("/api/aptitude?all=true&filterCategory=all"),
-        fetch("/api/roadmap?all=true"),
+        fetch(`/api/users?t=${Date.now()}`),
+        fetch(`/api/aptitude?pending=true&t=${Date.now()}`),
+        fetch(`/api/aptitude?all=true&filterCategory=all&t=${Date.now()}`),
+        fetch(`/api/roadmap?all=true&t=${Date.now()}`),
         fetch(`/api/placement?t=${Date.now()}`),
-        fetch("/api/notes"),
+        fetch(`/api/notes?t=${Date.now()}`),
       ]);
       const u = await usersRes.json();
       const q = await questionsRes.json();
@@ -226,6 +226,24 @@ export default function ModeratorPage() {
       loadAll();
     } catch {
       toast.error("Delete failed");
+    }
+  };
+
+  const manuallyVerifyMember = async (userId: string, action: "verify" | "reject") => {
+    try {
+      const res = await fetch("/api/users/ieee-manual-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: userId, action }),
+      });
+      if (res.ok) {
+        toast.success(action === "verify" ? "User granted Premium!" : "Membership card rejected.");
+        loadAll();
+      } else {
+        toast.error("Action failed.");
+      }
+    } catch {
+      toast.error("Error connecting to server.");
     }
   };
 
@@ -857,8 +875,25 @@ export default function ModeratorPage() {
                                          ${u.ieeeStatus === "verified" ? "bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700" : "bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-slate-600"}
                                        `}
                                      >
-                                        💳 View Source Card Image {u.ieeeStatus === "verified" ? "✓" : "(Pending Verification)"}
+                                        💳 View Source Card Image {u.ieeeStatus === "verified" ? "✓" : "(Pending)"}
                                      </a>
+                                     {u.ieeeStatus !== "verified" && (
+                                       <div className="mt-1 flex gap-2">
+                                         <button 
+                                           onClick={(e) => { e.stopPropagation(); manuallyVerifyMember(u._id, "verify"); }} 
+                                           className="flex-1 text-[11px] px-2 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg font-bold shadow-md hover:scale-[1.02] transition-transform flex justify-center items-center gap-1"
+                                         >
+                                           <Check size={14} /> Verify & Premium
+                                         </button>
+                                         <button 
+                                           onClick={(e) => { e.stopPropagation(); manuallyVerifyMember(u._id, "reject"); }} 
+                                           className="px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg font-bold shadow-sm hover:bg-red-100 transition-colors flex justify-center items-center"
+                                           title="Reject Card"
+                                         >
+                                           <X size={14} />
+                                         </button>
+                                       </div>
+                                     )}
                                    </div>
                                  ) : (
                                    <div className="flex items-center justify-center h-full opacity-60">

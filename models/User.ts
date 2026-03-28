@@ -17,6 +17,8 @@ export interface IUser extends Document {
   ieeeMembershipCard: string;
   ieeeVerified: boolean;
   ieeeVerifiedAt: Date | null;
+  ieeeCardUrl: string;
+  ieeeStatus: string;
   githubUsername: string;
   githubConnected: boolean;
   githubAccessToken: string;
@@ -42,6 +44,8 @@ const UserSchema = new Schema<IUser>(
     ieeeMembershipCard: { type: String, default: "" },
     ieeeVerified: { type: Boolean, default: false },
     ieeeVerifiedAt: { type: Date, default: null },
+    ieeeCardUrl: { type: String, default: "" },
+    ieeeStatus: { type: String, enum: ["none", "pending", "verified", "failed"], default: "none" },
     githubUsername: { type: String, default: "" },
     githubConnected: { type: Boolean, default: false },
     githubAccessToken: { type: String, default: "" },
@@ -49,5 +53,7 @@ const UserSchema = new Schema<IUser>(
   },
   { timestamps: true }
 );
+// Force Next.js to drop the cached schema to recognize new dynamically added fields
+delete mongoose.models.User;
 
-export default models.User || model<IUser>("User", UserSchema);
+export default mongoose.models.User || model<IUser>("User", UserSchema);

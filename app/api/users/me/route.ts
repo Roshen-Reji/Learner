@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   await dbConnect();
-  const user = await User.findById((session.user as any).id).select("points streakDays role isPremium roadmapCap");
+  const user = await User.findById((session.user as any).id).select("points streakDays role isPremium roadmapCap ieeeCardUrl ieeeStatus");
   
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
