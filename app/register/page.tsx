@@ -40,7 +40,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-surface-light">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-surface-light dark:bg-[#121212]">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mx-auto mb-4">

@@ -137,7 +137,7 @@ export default function GitHubPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-light">
+      <div className="min-h-screen">
         <Sidebar />
         <main className="lg:ml-72 pt-20 lg:pt-8 pb-32 lg:pb-8 min-h-screen flex items-center justify-center">
           <HeartbeatLoader message="LOADING GITHUB DATA" />

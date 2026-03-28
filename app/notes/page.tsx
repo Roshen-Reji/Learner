@@ -109,7 +109,7 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-light">
+    <div className="min-h-screen">
       <Sidebar />
       <main className="lg:ml-72 pt-16 lg:pt-0 pb-24 lg:pb-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-10">

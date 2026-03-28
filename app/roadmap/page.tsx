@@ -154,9 +154,9 @@ export default function RoadmapPage() {
   // ------------------------------------------
   if (!selectedRoadmap) {
     return (
-      <div className="min-h-screen bg-surface-light relative">
+      <div className="min-h-screen">
         <Sidebar />
-        <main className="lg:ml-72 pt-20 lg:pt-8 pb-32 lg:pb-8 min-h-screen flex flex-col">
+        <main className="lg:ml-72 pt-16 lg:pt-0 pb-24 lg:pb-8">
           <div className="px-4 sm:px-8 shrink-0">
             <h1 className="text-3xl sm:text-4xl font-black text-text-primary flex items-center gap-3 drop-shadow-sm tracking-tight">
               <Map className="text-primary" size={32} /> Master Your Craft

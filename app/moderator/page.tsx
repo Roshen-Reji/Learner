@@ -540,7 +540,7 @@ export default function ModeratorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-light">
+    <div className="min-h-screen">
       <Sidebar />
       <main className="lg:ml-72 pt-16 lg:pt-0 pb-24 lg:pb-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-10">
@@ -578,8 +578,8 @@ export default function ModeratorPage() {
                   onClick={() => setActiveTab(t.key)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all text-sm ${
                     activeTab === t.key
-                      ? "bg-primary text-white shadow-md shadow-primary/20"
-                      : "bg-white text-text-secondary hover:bg-gray-50 border border-border"
+                      ? "bg-primary text-white shadow-md shadow-primary/20 dark:shadow-none"
+                      : "bg-white dark:bg-[#121212] text-text-secondary hover:bg-gray-50 dark:hover:bg-[#1A1A1A] border border-border"
                   }`}
                 >
                   <Icon size={16} /> {t.label}
@@ -636,7 +636,7 @@ export default function ModeratorPage() {
                   <div className="flex items-center gap-2 text-amber-600 font-semibold text-sm">
                     <AlertCircle size={16} /> {stats.pendingQuestions} questions pending approval
                   </div>
-                  <button onClick={() => setActiveTab("questions")} className="text-primary text-sm font-medium mt-1 hover:underline">
+                  <button onClick={() => setActiveTab("questions")} className="text-primary dark:text-accent-cyan text-sm font-medium mt-1 hover:underline">
                     Review now →
                   </button>
                 </div>
@@ -1468,7 +1468,7 @@ export default function ModeratorPage() {
                             {new Date(fb.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                           </span>
                         </div>
-                        <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap bg-gray-50 p-3 rounded-lg">{fb.text}</p>
+                        <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap bg-gray-50 dark:bg-[#121212] p-3 rounded-lg dark:border dark:border-[#2A2A2A]">{fb.text}</p>
                       </div>
                     ))}
                   </div>

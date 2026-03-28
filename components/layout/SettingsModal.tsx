@@ -20,7 +20,9 @@ import {
   Info,
   CheckCircle2,
   RefreshCw,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { UploadDropzone } from "@uploadthing/react";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
 
@@ -62,6 +64,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const user = session?.user as any;
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
+  
+  // Theme Handling
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Feedback
   const [feedbackText, setFeedbackText] = useState("");
@@ -330,6 +337,24 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Appearance Block */}
+              {mounted && (
+                <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-border dark:border-white/10 flex items-center justify-between shadow-sm">
+                  <div>
+                    <h3 className="font-bold text-text-primary flex items-center gap-2">
+                      <Moon size={18} className="text-accent-cyan dark:text-accent-emerald" /> Dark Mode
+                    </h3>
+                    <p className="text-xs text-text-secondary mt-0.5">Override system theme preferences</p>
+                  </div>
+                  <button 
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    className={`w-14 h-7 rounded-full transition-colors relative flex items-center ${theme === 'dark' ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`}
+                  >
+                    <div className={`w-5 h-5 rounded-full bg-white absolute transition-transform shadow-md ${theme === 'dark' ? 'translate-x-8' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+              )}
 
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}

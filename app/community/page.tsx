@@ -310,7 +310,7 @@ export default function CommunityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-light">
+    <div className="min-h-screen">
       <Sidebar />
       <main className="lg:ml-72 pt-16 lg:pt-0 pb-24 lg:pb-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 lg:py-10">
@@ -411,7 +411,7 @@ export default function CommunityPage() {
                       {post.replies.map((reply, i) => (
                         <div
                           key={i}
-                          className="bg-surface-light rounded-xl p-3 ml-4 border-l-2 border-primary/20"
+                          className="bg-surface-light dark:bg-[#1A1A1A] rounded-xl p-3 ml-4 border-l-2 border-primary/20 dark:border-accent-cyan/20"
                         >
                           <div className="flex items-center gap-2 text-sm">
                             <span className="font-medium text-primary">{reply.authorName}</span>

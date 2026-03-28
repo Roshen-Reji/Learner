@@ -37,14 +37,14 @@ export default function LeaderboardPage() {
   };
 
   const getRowStyle = (rank: number) => {
-    if (rank === 1) return "card-gamify !border-amber-500 !shadow-amber-500/20";
-    if (rank === 2) return "card !border-gray-300 !shadow-md";
-    if (rank === 3) return "card !border-amber-600/30 !shadow-md";
-    return "card";
+    if (rank === 1) return "bg-primary dark:bg-[#1A1A1A] text-white border-2 border-amber-500 shadow-xl shadow-amber-500/20 rounded-2xl p-5";
+    if (rank === 2) return "bg-white dark:bg-[#1A1A1A] border-2 border-slate-300 dark:border-slate-700 shadow-md rounded-2xl p-5 text-text-primary dark:text-text-primary-dark";
+    if (rank === 3) return "bg-white dark:bg-[#1A1A1A] border-2 border-amber-600/30 dark:border-amber-600/50 shadow-md rounded-2xl p-5 text-text-primary dark:text-text-primary-dark";
+    return "bg-white dark:bg-[#1A1A1A] border border-border dark:border-[#2A2A2A] shadow-sm rounded-2xl p-5 text-text-primary dark:text-text-primary-dark hover:shadow-md transition-all";
   };
 
   return (
-    <div className="min-h-screen bg-surface-light">
+    <div className="min-h-screen">
       <Sidebar />
       <main className="lg:ml-72 pt-16 lg:pt-0 pb-24 lg:pb-8">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 lg:py-10">
@@ -82,23 +82,23 @@ export default function LeaderboardPage() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`font-semibold truncate ${rank <= 3 ? (rank === 1 ? "text-white" : "text-text-primary") : "text-text-primary"}`}>
+                        <span className={`font-semibold truncate`}>
                           {u.name}
                         </span>
-                        {isMe && <span className="badge-primary text-xs">You</span>}
+                        {isMe && <span className="bg-primary-100 dark:bg-accent-cyan/20 text-primary-700 dark:text-accent-cyan px-2 py-0.5 rounded-full text-xs font-bold">You</span>}
                       </div>
-                      <div className={`text-xs ${rank === 1 ? "text-gray-300" : "text-text-secondary"}`}>
+                      <div className={`text-xs ${rank === 1 ? "text-primary-100 dark:text-gray-400" : "text-text-secondary dark:text-gray-400"}`}>
                         {u.branch} • Year {u.year}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
                       {u.streakDays > 0 && (
-                        <div className={`flex items-center gap-1 text-sm font-bold ${rank === 1 ? "text-red-300" : "text-red-500"}`}>
+                        <div className={`flex items-center gap-1 text-sm font-bold ${rank === 1 ? "text-red-300 dark:text-red-400" : "text-red-500 dark:text-red-400"}`}>
                           <Flame size={14} /> {u.streakDays}
                         </div>
                       )}
-                      <div className={`flex items-center gap-1 font-bold ${rank === 1 ? "text-amber-300 text-lg" : "text-amber-600"}`}>
+                      <div className={`flex items-center gap-1 font-bold ${rank === 1 ? "text-amber-300 text-lg" : "text-amber-500"}`}>
                         <Star size={16} /> {u.points}
                       </div>
                     </div>

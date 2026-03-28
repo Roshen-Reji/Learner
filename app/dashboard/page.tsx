@@ -147,7 +147,7 @@ export default function DashboardPage() {
     greetingHour < 12 ? "Good Morning" : greetingHour < 17 ? "Good Afternoon" : "Good Evening";
 
   return (
-    <div className="min-h-screen bg-surface-light">
+    <div className="min-h-screen">
       <main className="lg:ml-72 pt-16 lg:pt-0 pb-24 lg:pb-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-10">
           {/* Hero greeting */}
@@ -189,11 +189,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Motivational quote */}
-          <div className="card mb-8 border-l-4 border-l-primary !rounded-l-sm">
+          <div className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-sm border border-border dark:border-[#2A2A2A] border-l-4 !border-l-primary dark:!border-l-accent-cyan mb-8">
             <div className="flex items-start gap-3">
-              <Sparkles className="text-primary shrink-0 mt-0.5" size={20} />
+              <Sparkles className="text-primary dark:text-accent-cyan shrink-0 mt-0.5" size={20} />
               <div>
-                <p className="font-medium text-text-primary italic">
+                <p className="font-medium text-text-primary dark:text-text-primary-dark italic">
                   "The only way to do great work is to love what you do. Don't settle."
                 </p>
                 <p className="text-sm text-text-secondary mt-1">— Steve Jobs</p>
@@ -209,18 +209,18 @@ export default function DashboardPage() {
             </h2>
 
             {!skillsData ? (
-              <div className="card text-center py-10">
-                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-4">
-                  <Brain className="text-primary" size={32} />
+              <div className="bg-white dark:bg-[#1A1A1A] border border-border dark:border-[#2A2A2A] rounded-2xl shadow-sm text-center py-10">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary/10 to-secondary/10 dark:from-accent-cyan/10 dark:to-accent-emerald/10 rounded-2xl flex items-center justify-center mb-4">
+                  <Brain className="text-primary dark:text-accent-cyan" size={32} />
                 </div>
-                <h3 className="font-bold text-lg text-text-primary mb-2">Discover Your Strengths</h3>
+                <h3 className="font-bold text-lg text-text-primary dark:text-text-primary-dark mb-2">Discover Your Strengths</h3>
                 <p className="text-sm text-text-secondary max-w-md mx-auto mb-6">
                   Our AI analyzes your completed roadmap nodes and aptitude performance to identify your top skills and career potential.
                 </p>
                 <button
                   onClick={analyzeSkills}
                   disabled={analyzingSkills}
-                  className="btn-primary flex items-center gap-2 mx-auto"
+                  className="bg-primary text-white hover:bg-primary/95 dark:bg-[#121212] dark:border dark:border-accent-cyan dark:text-accent-cyan dark:hover:bg-accent-cyan/10 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 mx-auto transition-colors"
                 >
                   {analyzingSkills ? (
                     <><Loader2 size={18} className="animate-spin" /> Analyzing...</>
@@ -246,18 +246,18 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-3 relative z-10 w-full">
                             <span className="text-2xl shrink-0">{skill.icon}</span>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-sm text-text-primary truncate">{skill.name}</h4>
+                              <h4 className="font-bold text-sm text-text-primary dark:text-white truncate">{skill.name}</h4>
                               <div className="flex items-center gap-2 mt-1">
                                 <div className="flex-1 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                                   <div
-                                    className="bg-gradient-to-r from-primary to-secondary h-1.5 rounded-full transition-all duration-1000"
+                                    className="bg-gradient-to-r from-primary to-secondary dark:from-accent-cyan dark:to-accent-emerald h-1.5 rounded-full transition-all duration-1000"
                                     style={{ width: `${Math.max(skill.confidence, 5)}%` }}
                                   />
                                 </div>
-                                <span className="text-xs font-bold text-primary w-8 text-right px-1">{skill.confidence}%</span>
+                                <span className="text-xs font-bold text-primary dark:text-accent-cyan w-8 text-right px-1">{skill.confidence}%</span>
                               </div>
                             </div>
-                            <div className="shrink-0 text-text-secondary bg-slate-50 dark:bg-slate-800 p-1.5 rounded-full group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                            <div className="shrink-0 text-text-secondary bg-slate-50 dark:bg-[#121212] border dark:border-[#2A2A2A] p-1.5 rounded-full group-hover:bg-primary/10 group-hover:text-primary dark:group-hover:border-accent-cyan/50 dark:group-hover:text-accent-cyan transition-colors">
                               {isCardExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </div>
                           </div>
@@ -265,16 +265,16 @@ export default function DashboardPage() {
                           {/* Expanded Content View */}
                           {isCardExpanded && (
                             <div className="mt-4 pt-4 border-t border-border/50 animate-in fade-in slide-in-from-top-2 duration-300 space-y-3 relative z-10 block">
-                              <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100/50 dark:border-blue-900/30">
-                                <div className="flex items-center gap-1.5 mb-1.5 text-blue-600 dark:text-blue-400">
+                              <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100/50 dark:border-accent-cyan/30">
+                                <div className="flex items-center gap-1.5 mb-1.5 text-blue-600 dark:text-accent-cyan">
                                   <Target size={14} />
                                   <span className="text-xs font-bold uppercase tracking-wide">Current Standing</span>
                                 </div>
                                 <p className="text-xs text-text-secondary leading-relaxed">{skill.currentStanding || skill.reasoning}</p>
                               </div>
                               
-                              <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100/50 dark:border-emerald-900/30">
-                                <div className="flex items-center gap-1.5 mb-1.5 text-emerald-600 dark:text-emerald-400">
+                              <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100/50 dark:border-accent-emerald/30">
+                                <div className="flex items-center gap-1.5 mb-1.5 text-emerald-600 dark:text-accent-emerald">
                                   <Rocket size={14} />
                                   <span className="text-xs font-bold uppercase tracking-wide">Where It Leads</span>
                                 </div>
@@ -287,7 +287,7 @@ export default function DashboardPage() {
                       })}
                     </div>
                     {skillsData.skills.length > 3 && (
-                      <button onClick={() => setSkillsExpanded(!skillsExpanded)} className="text-primary text-sm font-bold flex items-center justify-center gap-1 mx-auto mt-4 hover:bg-primary/5 px-4 py-2 rounded-full transition-colors border border-primary/20">
+                      <button onClick={() => setSkillsExpanded(!skillsExpanded)} className="text-primary dark:text-accent-cyan text-sm font-bold flex items-center justify-center gap-1 mx-auto mt-4 hover:bg-primary/5 dark:hover:bg-accent-cyan/10 px-4 py-2 rounded-full transition-colors border border-primary/20 dark:border-accent-cyan/20">
                         {skillsExpanded ? "Collapse View" : `View All ${skillsData.skills.length} Core Skills`}
                       </button>
                     )}
@@ -302,8 +302,8 @@ export default function DashboardPage() {
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {skillsData.bestFitJobs.map((job, idx) => (
-                        <span key={idx} className="bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-400 px-3 py-1.5 rounded-lg text-sm font-bold border border-amber-200 dark:border-amber-800 shadow-sm flex items-center gap-1.5 hover:-translate-y-0.5 transition-transform">
-                          <Target size={14} className="text-amber-500 opacity-70" /> {job}
+                        <span key={idx} className="bg-white dark:bg-slate-800 text-amber-800 dark:text-accent-cyan px-3 py-1.5 rounded-lg text-sm font-bold border border-amber-200 dark:border-accent-cyan/30 shadow-sm flex items-center gap-1.5 hover:-translate-y-0.5 transition-transform">
+                          <Target size={14} className="text-amber-500 dark:text-accent-cyan opacity-70" /> {job}
                         </span>
                       ))}
                     </div>
@@ -312,13 +312,13 @@ export default function DashboardPage() {
 
                 {/* Summary */}
                 {skillsData.summary && (
-                  <div className="card border-l-4 border-l-primary !rounded-l-sm">
+                  <div className="card border-l-4 border-l-primary dark:border-l-accent-cyan !rounded-l-sm">
                     <div className="flex items-start gap-3">
-                      <Sparkles className="text-primary shrink-0 mt-0.5" size={18} />
+                      <Sparkles className="text-primary dark:text-accent-cyan shrink-0 mt-0.5" size={18} />
                       <div>
-                        <p className="text-sm text-text-primary leading-relaxed">{skillsData.summary}</p>
+                        <p className="text-sm text-text-primary dark:text-text-primary-dark leading-relaxed">{skillsData.summary}</p>
                         {skillsData.recommendation && (
-                          <p className="text-sm font-semibold text-primary mt-2">
+                          <p className="text-sm font-semibold text-primary dark:text-text-primary-dark mt-2">
                             💡 {skillsData.recommendation}
                           </p>
                         )}
@@ -331,7 +331,7 @@ export default function DashboardPage() {
                 <button
                   onClick={analyzeSkills}
                   disabled={analyzingSkills}
-                  className="text-sm text-primary font-semibold flex items-center gap-2 hover:underline mx-auto"
+                  className="text-sm text-primary dark:text-accent-cyan font-semibold flex items-center gap-2 hover:underline mx-auto mt-4"
                 >
                   {analyzingSkills ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                   Re-analyze
