@@ -48,7 +48,7 @@ export default function LoginPage() {
             <span className="text-amber-300">Career Journey</span>
           </h1>
           <p className="text-lg text-white/80 mb-10 max-w-md">
-            IEEE Learn helps you master aptitude, build roadmaps, compete with peers,
+            LearnUp helps you master aptitude, build roadmaps, compete with peers,
             and land your dream placement.
           </p>
           <div className="space-y-4">
@@ -78,7 +78,7 @@ export default function LoginPage() {
               <span className="text-white font-bold text-2xl">I</span>
             </div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              IEEE Learn
+              LearnUp
             </h1>
           </div>
 

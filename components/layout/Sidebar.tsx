@@ -67,7 +67,7 @@ export default function Sidebar() {
           <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1.5 text-text-primary dark:text-text-primary-dark">
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
-          <span className="font-bold text-primary dark:text-accent-cyan text-lg">IEEE Learn</span>
+          <span className="font-bold text-primary dark:text-accent-cyan text-lg">LearnUp</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 px-2.5 py-1 rounded-full text-sm font-semibold">
@@ -106,7 +106,7 @@ export default function Sidebar() {
             </div>
             <div className={`transition-all duration-300 ${isMinimized ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : ""}`}>
               <h1 className="text-xl font-black text-text-primary dark:text-text-primary-dark tracking-tight">
-                IEEE<span className="text-primary dark:text-accent-cyan font-bold">Learn</span>
+                Learn<span className="text-primary dark:text-accent-cyan font-bold">Up</span>
               </h1>
             </div>
           </div>

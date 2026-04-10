@@ -826,7 +826,7 @@ export default function ModeratorPage() {
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-semibold text-text-primary">{u.name}</span>
                                 <span className={`badge text-xs ${u.role === "moderator" ? "badge-warning" : "badge-primary"}`}>{u.role}</span>
-                                {u.ieeeStatus === "verified" && <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1">💳 IEEE True</span>}
+                                {u.ieeeStatus === "verified" && <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1">💳 IEEE Verified</span>}
                               </div>
                               <p className="text-sm text-text-secondary">{u.email} • {u.branch} Y{u.year} • {u.points || 0} pts</p>
                             </div>

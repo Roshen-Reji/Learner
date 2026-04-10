@@ -136,8 +136,8 @@ export async function chatWithAI(
   }
 
   const systemContext = userContext
-    ? `You are an AI learning assistant for IEEE student members. The student is from ${userContext.branch} branch, Year ${userContext.year}. Help them with career guidance, learning paths, and technical questions. Be motivating and concise.`
-    : "You are an AI learning assistant for IEEE student members. Help them with career guidance, learning paths, and technical questions. Be motivating and concise.";
+    ? `You are an AI learning assistant for students. The student is from ${userContext.branch} branch, Year ${userContext.year}. Help them with career guidance, learning paths, and technical questions. Be motivating and concise.`
+    : "You are an AI learning assistant for students. Help them with career guidance, learning paths, and technical questions. Be motivating and concise.";
 
   const chatHistory = messages.map((m) => ({
     role: m.role === "user" ? "user" : "model",

@@ -2,9 +2,9 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "IEEE Learning Platform",
-    short_name: "IEEE Learn",
-    description: "Empowering IEEE students with aptitude practices, roadmap generation, and career tracking.",
+    name: "LearnUp Platform",
+    short_name: "LearnUp",
+    description: "Empowering students with aptitude practices, roadmap generation, and career tracking.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

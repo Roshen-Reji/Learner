@@ -15,10 +15,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "IEEE Learn | Level Up Your Career",
+  title: "LearnUp | Level Up Your Career",
   description:
-    "A gamified learning platform for IEEE members. Master aptitude, coding, roadmaps, and compete on the leaderboard.",
-  keywords: ["IEEE", "learning", "aptitude", "coding", "roadmap", "leaderboard", "placement"],
+    "A gamified learning platform for students. Master aptitude, coding, roadmaps, and compete on the leaderboard.",
+  keywords: ["learning", "aptitude", "coding", "roadmap", "leaderboard", "placement"],
 };
 
 export default async function RootLayout({

@@ -47,7 +47,7 @@ export default function RegisterPage() {
             <span className="text-white font-bold text-2xl">I</span>
           </div>
           <h2 className="text-3xl font-bold text-text-primary">Create Account</h2>
-          <p className="text-text-secondary mt-2">Join IEEE Learn and start leveling up</p>
+          <p className="text-text-secondary mt-2">Join LearnUp and start leveling up</p>
         </div>
 
         <form onSubmit={handleRegister} className="card space-y-4">

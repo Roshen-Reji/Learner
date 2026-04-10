@@ -20,8 +20,8 @@ async function seed() {
   const db = mongoose.connection.db!;
 
   // Seed moderator
-  const modEmail = process.env.MOD_EMAIL || "admin@ieeelearn.com";
-  const modPassword = process.env.MOD_PASSWORD || "IEEEAdmin2024!";
+  const modEmail = process.env.MOD_EMAIL || "admin@learnup.app";
+  const modPassword = process.env.MOD_PASSWORD || "Admin2024!";
   const existing = await db.collection("users").findOne({ email: modEmail });
 
   if (!existing) {

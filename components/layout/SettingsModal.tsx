@@ -233,7 +233,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   // ──── IEEE VERIFICATION ────
   const verifyIEEECard = async () => {
     if (!ieeeCardUrl.trim()) {
-      toast.error("Please enter the URL of your IEEE membership card image");
+      toast.error("Please upload your IEEE membership card image first");
       return;
     }
     setVerifying(true);
@@ -477,7 +477,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <div className="space-y-5 animate-fade-in">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 border border-blue-200 dark:border-blue-700 rounded-2xl p-5">
                 <h3 className="font-bold text-blue-800 dark:text-blue-400 mb-1 flex items-center gap-2"><CreditCard size={18} /> IEEE Membership Verification</h3>
-                <p className="text-sm text-blue-700 dark:text-blue-500">Upload your IEEE membership card to earn bonus points. Our AI will verify its authenticity.</p>
+                <p className="text-sm text-blue-700 dark:text-blue-500">Upload your IEEE membership card to earn bonus points. Our moderators will verify its authenticity.</p>
               </div>
               {ieeeStatus === "verified" ? (
                 <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-300 dark:border-emerald-700 rounded-2xl p-6 text-center shadow-lg relative overflow-hidden animate-fade-in">
@@ -532,7 +532,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   )}
                   {ieeeStatus === "failed" && (
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-xl p-3 text-sm text-red-600 dark:text-red-400 font-medium flex gap-2">
-                      <X size={16} className="shrink-0 mt-0.5" /> Verification rejected by moderator. Please upload a clear official IEEE card.
+                      <X size={16} className="shrink-0 mt-0.5" /> Verification rejected by moderator. Please upload a clear official IEEE membership card.
                     </div>
                   )}
                   
