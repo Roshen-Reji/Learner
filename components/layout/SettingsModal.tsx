@@ -66,7 +66,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("account");
   
   // Theme Handling
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -348,10 +348,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <p className="text-xs text-text-secondary mt-0.5">Override system theme preferences</p>
                   </div>
                   <button 
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className={`w-14 h-7 rounded-full transition-colors relative flex items-center ${theme === 'dark' ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`}
+                    onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                    className={`w-14 h-7 rounded-full transition-colors relative flex items-center ${resolvedTheme === 'dark' ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`}
                   >
-                    <div className={`w-5 h-5 rounded-full bg-white absolute transition-transform shadow-md ${theme === 'dark' ? 'translate-x-8' : 'translate-x-1'}`} />
+                    <div className={`w-5 h-5 rounded-full bg-white absolute transition-transform shadow-md ${resolvedTheme === 'dark' ? 'translate-x-8' : 'translate-x-1'}`} />
                   </button>
                 </div>
               )}
